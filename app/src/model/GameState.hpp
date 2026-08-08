@@ -32,11 +32,17 @@ public:
     Difficulty difficulty = Difficulty::Normal;
     float custom_speed = 150.f;
     float custom_interval = 2.5f;
+    float custom_pillar_speed = 100.f;
+    float custom_fire_interval = 2.5f;
+    float custom_fireball_speed = 250.f;
 
     TimeRecord records;
 
     float get_barrel_speed() const;
     float get_barrel_interval() const;
+    float get_pillar_speed() const;
+    float get_fire_interval() const;
+    float get_fireball_speed() const;
 
     void save_records(const char* path = "assets/times.dat");
     void load_records(const char* path = "assets/times.dat");

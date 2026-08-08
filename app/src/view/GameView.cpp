@@ -3,9 +3,11 @@
 #include "../model/Player.hpp"
 #include "../model/Platform.hpp"
 #include "../model/Barrel.hpp"
-#include "../model/DonkeyKong.hpp"
+#include "../model/Boss.hpp"
 #include "../model/Coin.hpp"
 #include "../model/PowerUp.hpp"
+#include "../model/PillarEnemy.hpp"
+#include "../model/HeartPickup.hpp"
 #include <cmath>
 
 // ── Layout constants for title screen ──
@@ -15,27 +17,41 @@ static sf::FloatRect r_hard()   { return {{510, 260}, {130, 50}}; }
 static sf::FloatRect r_custom() { return {{320, 340}, {160, 50}}; }
 static sf::FloatRect r_play_t() { return {{320, 430}, {160, 50}}; }
 
-// ── Layout constants for custom screen ──
-static sf::FloatRect r_speed()   { return {{250, 230}, {300, 20}}; }
-static sf::FloatRect r_interval(){ return {{250, 350}, {300, 20}}; }
-static sf::FloatRect r_cplay()   { return {{320, 420}, {160, 50}}; }
+// ── Layout constants for custom screen (grouped by enemy) ──
+static sf::FloatRect r_speed()        { return {{250, 205}, {300, 20}}; }
+static sf::FloatRect r_interval()     { return {{250, 275}, {300, 20}}; }
+static sf::FloatRect r_pillar_speed() { return {{250, 420}, {300, 20}}; }
+static sf::FloatRect r_fire_rate()    { return {{250, 490}, {300, 20}}; }
+static sf::FloatRect r_fire_speed()   { return {{250, 560}, {300, 20}}; }
+static sf::FloatRect r_cplay()        { return {{320, 650}, {160, 50}}; }
 
 sf::FloatRect GameView::title_btn_easy()   { return r_easy(); }
 sf::FloatRect GameView::title_btn_normal() { return r_normal(); }
 sf::FloatRect GameView::title_btn_hard()   { return r_hard(); }
 sf::FloatRect GameView::title_btn_custom() { return r_custom(); }
 sf::FloatRect GameView::title_btn_play()   { return r_play_t(); }
-sf::FloatRect GameView::custom_speed_track()   { return r_speed(); }
-sf::FloatRect GameView::custom_interval_track(){ return r_interval(); }
-sf::FloatRect GameView::custom_btn_play()      { return r_cplay(); }
+sf::FloatRect GameView::custom_speed_track()       { return r_speed(); }
+sf::FloatRect GameView::custom_interval_track()    { return r_interval(); }
+sf::FloatRect GameView::custom_pillar_speed_track(){ return r_pillar_speed(); }
+sf::FloatRect GameView::custom_fire_rate_track()   { return r_fire_rate(); }
+sf::FloatRect GameView::custom_fire_speed_track()  { return r_fire_speed(); }
+sf::FloatRect GameView::custom_btn_play()          { return r_cplay(); }
 
-GameView::GameView()
-    : window(sf::VideoMode({800u, 750u}), "Donkey Kong") {
+GameView::GameView() {
+    window.create(sf::VideoMode({800u, 750u}), "Ladder Climber", sf::Style::Resize | sf::Style::Close);
+    window.setMinimumSize(sf::Vector2u{800u, 750u});
+    window.setMaximumSize(sf::Vector2u{1600u, 1500u});
+    auto dsize = sf::VideoMode::getDesktopMode().size;
+    window.setPosition({
+        (int)((dsize.x - 800u) / 2u),
+        (int)((dsize.y - 750u) / 2u)
+    });
 
     window.setFramerateLimit(60);
     load_font();
+    update_view();
 
-    title_text.setString("DONKEY KONG");
+    title_text.setString("LADDER CLIMBER");
     title_text.setCharacterSize(48);
     title_text.setFillColor(sf::Color::Yellow);
     auto tb = title_text.getLocalBounds();
@@ -106,7 +122,28 @@ GameView::GameView()
     [[maybe_unused]] bool p_ok = plat_tex.loadFromFile("assets/sprites/platform.png");
     [[maybe_unused]] bool lt_ok = ladder_tex.loadFromFile("assets/sprites/ladder.png");
     [[maybe_unused]] bool lv_ok = lava_tex.loadFromFile("assets/sprites/lava.png");
+    [[maybe_unused]] bool boss_ok = boss_tex.loadFromFile("assets/sprites/boss.png");
     bg_shape.setFillColor(sf::Color{20, 20, 40});
+}
+
+void GameView::update_view() {
+    sf::Vector2u ws = window.getSize();
+    float w = (float)ws.x, h = (float)ws.y;
+    if (w < 1 || h < 1) return;
+    // Letterbox: use the smallest uniform scale so the whole game is always
+    // visible, centered. When the window aspect ratio differs from 4:3 the
+    // leftover space shows as black bars on the sides (or top/bottom).
+    float scale = std::min(w / 800.f, h / 750.f);
+    sf::FloatRect vp{
+        {w - 800.f * scale, h - 750.f * scale},
+        {w, h}};
+    vp.position.x /= 2.f * w;
+    vp.position.y /= 2.f * h;
+    vp.size.x = 800.f * scale / w;
+    vp.size.y = 750.f * scale / h;
+    game_view = sf::View(sf::FloatRect{{0.f, 0.f}, {800.f, 750.f}});
+    game_view.setViewport(vp);
+    window.setView(game_view);
 }
 
 bool GameView::load_font() {
@@ -174,16 +211,47 @@ void GameView::draw(const GameState& state, const Player& player,
                     const std::vector<Platform>& platforms,
                     const std::vector<Ladder>& ladders,
                     const std::vector<std::unique_ptr<Barrel>>& barrels,
-                    const DonkeyKong& dk, float lava_anim,
-                    const std::vector<Coin>& coins,
-                    const PowerUp* powerup) {
+                    const Boss& dk, float lava_anim,
+                    const PowerUp* powerup,
+                    const HeartPickup* heart_pickup,
+                    const PillarEnemy* left_pillar,
+                    const PillarEnemy* right_pillar) {
 
     window.clear(sf::Color{20, 20, 40});
+    window.setView(game_view);
 
     // ── TITLE SCREEN ──
     if (state.phase == GameState::Phase::Title) {
+        // Background
+        if (bg_tex.getSize().x > 0) {
+            sf::Sprite bg_spr(bg_tex);
+            window.draw(bg_spr);
+        } else {
+            window.draw(bg_shape);
+        }
+
+        // Boss + princess icons near the top of the level
+        if (boss_tex.getSize().x > 0) {
+            sf::Sprite boss_spr(boss_tex);
+            auto bs = boss_tex.getSize();
+            float bscale = 48.f / (float)(bs.x > 0 ? bs.x : 48);
+            boss_spr.setScale({bscale, bscale});
+            boss_spr.setOrigin({(float)bs.x / 2.f, (float)bs.y / 2.f});
+            boss_spr.setPosition({90, 140});
+            window.draw(boss_spr);
+        }
+        if (princess_tex.getSize().x > 0) {
+            sf::Sprite pr_spr(princess_tex);
+            auto ps = princess_tex.getSize();
+            float pscale = 30.f / (float)(ps.x > 0 ? ps.x : 30);
+            pr_spr.setScale({pscale, pscale});
+            pr_spr.setOrigin({(float)ps.x / 2.f, (float)ps.y / 2.f});
+            pr_spr.setPosition({120, 156});
+            window.draw(pr_spr);
+        }
+
         sf::RectangleShape overlay({800, 750});
-        overlay.setFillColor(sf::Color{0, 0, 0, 180});
+        overlay.setFillColor(sf::Color{0, 0, 0, 150});
         window.draw(overlay);
         window.draw(title_text);
 
@@ -225,43 +293,130 @@ void GameView::draw(const GameState& state, const Player& player,
         heading.setFillColor(sf::Color::Yellow);
         auto hb = heading.getLocalBounds();
         heading.setOrigin({hb.position.x + hb.size.x / 2, hb.position.y + hb.size.y / 2});
-        heading.setPosition({400, 100});
+        heading.setPosition({400, 55});
         window.draw(heading);
 
-        // Speed label + slider
-        {
-            sf::Text lbl(font, "Barrel Speed:", 20);
-            lbl.setFillColor(sf::Color::White);
-            auto lb = lbl.getLocalBounds();
-            lbl.setOrigin({lb.position.x + lb.size.x / 2, 0});
-            lbl.setPosition({400, 170});
-            window.draw(lbl);
-            draw_slider(400, 240, 60.f, 400.f, state.custom_speed);
-            sf::Text val(font, std::to_string(int(state.custom_speed)), 18);
-            val.setFillColor(sf::Color{200, 200, 100});
-            auto vb = val.getLocalBounds();
-            val.setOrigin({vb.position.x + vb.size.x / 2, 0});
-            val.setPosition({400, 260});
-            window.draw(val);
-        }
+        // Helper to draw a section header with a sprite on the left
+        auto draw_enemy_header = [&](float y, const std::string& label, const sf::Texture& tex) {
+            sf::Text sec(font, label, 26);
+            sec.setFillColor(sf::Color{255, 200, 100});
+            auto sb = sec.getLocalBounds();
+            sec.setOrigin({sb.position.x + sb.size.x / 2, sb.position.y + sb.size.y / 2});
+            float sec_w = sb.size.x + 34.f;
+            sec.setPosition({400 + 17.f, y});
+            window.draw(sec);
+            sf::Sprite spr(tex);
+            auto ts = tex.getSize();
+            float scale = 30.f / (float)(ts.x > 0 ? ts.x : 30);
+            spr.setScale({scale, scale});
+            spr.setOrigin({(float)ts.x / 2.f, (float)ts.y / 2.f});
+            spr.setPosition({400 - sec_w / 2.f + 10.f, y});
+            window.draw(spr);
+        };
 
-        // Interval label + slider
+        // ── BOSS section (barrel conditions) ──
         {
-            sf::Text lbl(font, "Barrel Rate (seconds):", 20);
-            lbl.setFillColor(sf::Color::White);
-            auto lb = lbl.getLocalBounds();
-            lbl.setOrigin({lb.position.x + lb.size.x / 2, 0});
-            lbl.setPosition({400, 290});
-            window.draw(lbl);
-            draw_slider(400, 360, 0.5f, 5.f, state.custom_interval);
+            if (boss_tex.getSize().x > 0) draw_enemy_header(100, "BOSS", boss_tex);
+            else {
+                sf::Text sec(font, "BOSS", 26);
+                sec.setFillColor(sf::Color{255, 200, 100});
+                auto sb = sec.getLocalBounds();
+                sec.setOrigin({sb.position.x + sb.size.x / 2, sb.position.y + sb.size.y / 2});
+                sec.setPosition({400, 100});
+                window.draw(sec);
+            }
+
+            sf::Text lbl1(font, "Barrel Speed:", 18);
+            lbl1.setFillColor(sf::Color::White);
+            auto lb1 = lbl1.getLocalBounds();
+            lbl1.setOrigin({lb1.position.x + lb1.size.x / 2, 0});
+            lbl1.setPosition({400, 130});
+            window.draw(lbl1);
+            draw_slider(400, 215, 60.f, 400.f, state.custom_speed);
+            sf::Text val1(font, std::to_string(int(state.custom_speed)), 16);
+            val1.setFillColor(sf::Color{200, 200, 100});
+            auto vb1 = val1.getLocalBounds();
+            val1.setOrigin({vb1.position.x + vb1.size.x / 2, 0});
+            val1.setPosition({400, 235});
+            window.draw(val1);
+
+            sf::Text lbl2(font, "Barrel Rate (seconds):", 18);
+            lbl2.setFillColor(sf::Color::White);
+            auto lb2 = lbl2.getLocalBounds();
+            lbl2.setOrigin({lb2.position.x + lb2.size.x / 2, 0});
+            lbl2.setPosition({400, 265});
+            window.draw(lbl2);
+            draw_slider(400, 285, 0.5f, 5.f, state.custom_interval);
             char ibuf[16];
             std::snprintf(ibuf, sizeof(ibuf), "%.1f s", (double)state.custom_interval);
-            sf::Text val(font, ibuf, 18);
-            val.setFillColor(sf::Color{200, 200, 100});
-            auto vb2 = val.getLocalBounds();
-            val.setOrigin({vb2.position.x + vb2.size.x / 2, 0});
-            val.setPosition({400, 380});
-            window.draw(val);
+            sf::Text val2(font, ibuf, 16);
+            val2.setFillColor(sf::Color{200, 200, 100});
+            auto vb2 = val2.getLocalBounds();
+            val2.setOrigin({vb2.position.x + vb2.size.x / 2, 0});
+            val2.setPosition({400, 305});
+            window.draw(val2);
+        }
+
+        // ── BAR ENEMY section (fire shooter conditions) ──
+        {
+            sf::Text sec2(font, "BAR ENEMY", 26);
+            sec2.setFillColor(sf::Color{255, 200, 100});
+            auto s2b = sec2.getLocalBounds();
+            sec2.setOrigin({s2b.position.x + s2b.size.x / 2, s2b.position.y + s2b.size.y / 2});
+            float sec2_w = s2b.size.x + 34.f;
+            sec2.setPosition({400 + 17.f, 340});
+            window.draw(sec2);
+            sf::CircleShape bar_icon(13.f);
+            bar_icon.setOrigin({13.f, 13.f});
+            bar_icon.setPosition({400 - sec2_w / 2.f + 10.f, 340});
+            bar_icon.setFillColor(sf::Color{220, 100, 20});
+            bar_icon.setOutlineColor(sf::Color::Yellow);
+            bar_icon.setOutlineThickness(2.f);
+            window.draw(bar_icon);
+
+            sf::Text lbl3(font, "Move Speed (up/down):", 18);
+            lbl3.setFillColor(sf::Color::White);
+            auto lb3 = lbl3.getLocalBounds();
+            lbl3.setOrigin({lb3.position.x + lb3.size.x / 2, 0});
+            lbl3.setPosition({400, 370});
+            window.draw(lbl3);
+            draw_slider(400, 430, 50.f, 250.f, state.custom_pillar_speed);
+            sf::Text val3(font, std::to_string(int(state.custom_pillar_speed)), 16);
+            val3.setFillColor(sf::Color{200, 200, 100});
+            auto vb3 = val3.getLocalBounds();
+            val3.setOrigin({vb3.position.x + vb3.size.x / 2, 0});
+            val3.setPosition({400, 450});
+            window.draw(val3);
+
+            sf::Text lbl4(font, "Shoot Rate (seconds):", 18);
+            lbl4.setFillColor(sf::Color::White);
+            auto lb4 = lbl4.getLocalBounds();
+            lbl4.setOrigin({lb4.position.x + lb4.size.x / 2, 0});
+            lbl4.setPosition({400, 480});
+            window.draw(lbl4);
+            draw_slider(400, 500, 0.5f, 5.f, state.custom_fire_interval);
+            char fbuf[16];
+            std::snprintf(fbuf, sizeof(fbuf), "%.1f s", (double)state.custom_fire_interval);
+            sf::Text val4(font, fbuf, 16);
+            val4.setFillColor(sf::Color{200, 200, 100});
+            auto vb4 = val4.getLocalBounds();
+            val4.setOrigin({vb4.position.x + vb4.size.x / 2, 0});
+            val4.setPosition({400, 520});
+            window.draw(val4);
+
+            sf::Text lbl5(font, "Fireball Speed:", 18);
+            lbl5.setFillColor(sf::Color::White);
+            auto lb5 = lbl5.getLocalBounds();
+            lbl5.setOrigin({lb5.position.x + lb5.size.x / 2, 0});
+            lbl5.setPosition({400, 550});
+            window.draw(lbl5);
+            draw_slider(400, 570, 120.f, 450.f, state.custom_fireball_speed);
+            sf::Text val5(font, std::to_string(int(state.custom_fireball_speed)), 16);
+            val5.setFillColor(sf::Color{200, 200, 100});
+            auto vb5 = val5.getLocalBounds();
+            val5.setOrigin({vb5.position.x + vb5.size.x / 2, 0});
+            val5.setPosition({400, 590});
+            window.draw(val5);
         }
 
         draw_btn(r_cplay(), "PLAY", sf::Color{50, 150, 50});
@@ -398,11 +553,87 @@ void GameView::draw(const GameState& state, const Player& player,
     for (auto& b : barrels)
         b->draw(window);
 
-    // Coins
-    for (auto& c : coins) c.draw(window);
+    // HeartPickup
+    if (heart_pickup) heart_pickup->draw(window);
+
+    // HeartPickup
+    if (heart_pickup) heart_pickup->draw(window);
 
     // PowerUp
     if (powerup) powerup->draw(window);
+
+    // Pillar enemies
+    if (left_pillar) left_pillar->draw(window);
+    if (right_pillar) right_pillar->draw(window);
+
+    // ── STAGE 1 TUTORIAL HINTS ──
+    if (state.phase == GameState::Phase::Playing && state.stage == 1) {
+        // Arrow pointing up toward the boss at the top
+        {
+            float ax = 90.f, ay = 300.f;
+            sf::RectangleShape stem({4, 90});
+            stem.setFillColor(sf::Color{255, 220, 80, 220});
+            stem.setPosition({ax - 2, ay - 70});
+            window.draw(stem);
+            sf::ConvexShape head(3);
+            head.setPoint(0, {ax - 14, ay - 70});
+            head.setPoint(1, {ax + 14, ay - 70});
+            head.setPoint(2, {ax, ay - 110});
+            head.setFillColor(sf::Color{255, 220, 80, 220});
+            window.draw(head);
+        }
+
+        auto hint_panel = [&](float x, float y, const std::string& title, const std::string& body) {
+            sf::Text tt(font, title, 18);
+            tt.setFillColor(sf::Color{255, 220, 80});
+            auto ttb = tt.getLocalBounds();
+            float panel_w = 260.f;
+            sf::RectangleShape panel({panel_w, 74});
+            panel.setFillColor(sf::Color{0, 0, 0, 160});
+            panel.setOutlineColor(sf::Color{255, 220, 80});
+            panel.setOutlineThickness(1.f);
+            panel.setPosition({x, y});
+            window.draw(panel);
+            tt.setPosition({x + 12, y + 8});
+            window.draw(tt);
+            sf::Text bt(font, body, 14);
+            bt.setFillColor(sf::Color::White);
+            bt.setPosition({x + 12, y + 34});
+            window.draw(bt);
+        };
+
+        hint_panel(120, 590, "MOVE & JUMP", "WASD or Arrow keys  |  SPACE = jump\nClimb ladders with UP / DOWN");
+        hint_panel(420, 590, "DOUBLE JUMP", "Press SPACE again in the air\nJump across gaps and barrels");
+
+        // Reach-the-boss hint below the arrow
+        sf::Text reach(font, "REACH THE BOSS!", 18);
+        reach.setFillColor(sf::Color{255, 220, 80});
+        auto rb = reach.getLocalBounds();
+        reach.setOrigin({rb.size.x / 2, 0});
+        reach.setPosition({90, 330});
+        window.draw(reach);
+
+        // God-mode pickup marking (fixed location, middle of spawn platform)
+        if (powerup && powerup->is_active()) {
+            auto pp = powerup->get_pos();
+            sf::Text god(font, "GOD MODE", 16);
+            god.setFillColor(sf::Color{100, 255, 255});
+            auto gb = god.getLocalBounds();
+            god.setOrigin({gb.size.x / 2, 0});
+            god.setPosition({pp.x + 12.f, pp.y - 90.f});
+            window.draw(god);
+            sf::RectangleShape stem({3, 55});
+            stem.setFillColor(sf::Color{100, 255, 255, 220});
+            stem.setPosition({pp.x + 12.f - 1.5f, pp.y - 75.f});
+            window.draw(stem);
+            sf::ConvexShape head(3);
+            head.setPoint(0, {pp.x + 12.f - 12, pp.y - 20});
+            head.setPoint(1, {pp.x + 12.f + 12, pp.y - 20});
+            head.setPoint(2, {pp.x + 12.f, pp.y - 4});
+            head.setFillColor(sf::Color{100, 255, 255, 220});
+            window.draw(head);
+        }
+    }
 
     // Stage number (top-right)
     std::string sstr = std::to_string(state.stage);
@@ -442,14 +673,6 @@ void GameView::draw(const GameState& state, const Player& player,
             tri.setOutlineThickness(1.f);
             window.draw(tri);
         }
-    }
-
-    // Coin counter (top-left)
-    {
-        sf::Text coin_text(font, "COINS: " + std::to_string(state.coins), 18);
-        coin_text.setFillColor(sf::Color::Yellow);
-        coin_text.setPosition({12, 8});
-        window.draw(coin_text);
     }
 
     // Timer display (middle-top)
@@ -497,8 +720,23 @@ void GameView::draw(const GameState& state, const Player& player,
         status_text.setPosition({400, 180});
         window.draw(status_text);
 
+        pause_resume_btn.setSize({160, 50});
+        pause_resume_btn.setOrigin({80, 25});
+        pause_resume_btn.setPosition({400, 260});
+        pause_resume_text.setCharacterSize(24);
+        auto prb = pause_resume_text.getLocalBounds();
+        pause_resume_text.setOrigin({prb.position.x + prb.size.x / 2, prb.position.y + prb.size.y / 2});
+        pause_resume_text.setPosition({400, 260});
         window.draw(pause_resume_btn);
         window.draw(pause_resume_text);
+
+        pause_reset_btn.setSize({160, 50});
+        pause_reset_btn.setOrigin({80, 25});
+        pause_reset_btn.setPosition({400, 340});
+        pause_reset_text.setCharacterSize(24);
+        auto prv = pause_reset_text.getLocalBounds();
+        pause_reset_text.setOrigin({prv.position.x + prv.size.x / 2, prv.position.y + prv.size.y / 2});
+        pause_reset_text.setPosition({400, 340});
         window.draw(pause_reset_btn);
         window.draw(pause_reset_text);
     }
@@ -625,6 +863,15 @@ void GameView::draw(const GameState& state, const Player& player,
             btn_texts[bi]->setPosition({bx[bi], 340});
             window.draw(*btn_texts[bi]);
         }
+
+        sf::Text skip_hint(font);
+        skip_hint.setString("Press SPACE to continue");
+        skip_hint.setCharacterSize(18);
+        skip_hint.setFillColor(sf::Color{200, 200, 220});
+        auto skh = skip_hint.getLocalBounds();
+        skip_hint.setOrigin({skh.size.x / 2, 0});
+        skip_hint.setPosition({400, 405});
+        window.draw(skip_hint);
     }
 
     window.display();

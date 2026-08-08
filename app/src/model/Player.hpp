@@ -16,6 +16,7 @@ public:
     void update(float dt);
 
     void set_position(float x, float y);
+    void clamp_x(float lo, float hi);
     void bump_head(float y);
     void set_on_ground(bool g);
     void set_dead(bool d) { dead = d; }
@@ -31,6 +32,8 @@ public:
     bool is_climbing() const { return climbing; }
     void set_climbing(bool c) { climbing = c; }
     bool is_dead() const { return dead; }
+    int get_lives() const { return lives; }
+    void set_lives(int l) { lives = l; }
     int get_jumps_left() const { return jumps_left; }
     int get_bunny_count() const { return bunny_count; }
 
@@ -51,6 +54,7 @@ private:
     int bunny_count = 0;
     bool invincible = false;
     float invincible_timer = 0;
+    int lives = 3;
 
     float get_current_speed() const;
 

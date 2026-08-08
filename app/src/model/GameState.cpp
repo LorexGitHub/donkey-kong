@@ -44,3 +44,33 @@ float GameState::get_barrel_interval() const {
     }
     return 2.0f;
 }
+
+float GameState::get_pillar_speed() const {
+    switch (difficulty) {
+        case Difficulty::Easy:   return 60.f;
+        case Difficulty::Normal: return 100.f;
+        case Difficulty::Hard:   return 150.f;
+        case Difficulty::Custom: return custom_pillar_speed;
+    }
+    return 100.f;
+}
+
+float GameState::get_fire_interval() const {
+    switch (difficulty) {
+        case Difficulty::Easy:   return 3.5f;
+        case Difficulty::Normal: return 2.5f;
+        case Difficulty::Hard:   return 1.3f;
+        case Difficulty::Custom: return custom_fire_interval;
+    }
+    return 2.5f;
+}
+
+float GameState::get_fireball_speed() const {
+    switch (difficulty) {
+        case Difficulty::Easy:   return 150.f;
+        case Difficulty::Normal: return 250.f;
+        case Difficulty::Hard:   return 360.f;
+        case Difficulty::Custom: return custom_fireball_speed;
+    }
+    return 250.f;
+}

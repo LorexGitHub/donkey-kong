@@ -19,7 +19,12 @@ void Game::go_to_title() {
     state.paused = false;
     state.overall_timer = 0;
     state.lives = 3;
+    state.crowns = 0;  // Reset progress so a new run starts from stage 1
+    state.last_pickup_stage = 0;
+    state.coins = 0;  // keep for backward compatibility but unused
     barrels.clear();
+    powerup.reset();
+    heart_pickup.reset();
     player.set_position(100.f, 710.f);
     player.set_dead(false);
     player.set_climbing(false);
@@ -58,7 +63,9 @@ void Game::start_game() {
     barrel_timer = 0;
     player.set_position(100.f, 710.f);
     player.set_dead(false);
-    dk = DonkeyKong(60.f, 140.f, state.stage);
+    player.set_lives(3);  // Ensure player starts with 3 hearts
+    player.set_invincible(0.f);  // Reset invincibility
+    dk = Boss(60.f, 140.f, state.stage);
     player.set_climbing(false);
 
     float speed = state.get_barrel_speed();
@@ -95,6 +102,22 @@ void Game::setup_stage() {
         ladders.emplace_back(x, ys[i], ys[i + 1]);
     }
 
+    // Create pillar enemies
+    float top_y = ys.front();
+    float bot_y = ys.back();
+    left_pillar = std::make_unique<PillarEnemy>(35.f, top_y, bot_y, 1);
+    right_pillar = std::make_unique<PillarEnemy>(765.f, top_y, bot_y, -1);
+
+    float pspeed = state.get_pillar_speed();
+    float pfire  = state.get_fire_interval();
+    float pfball = state.get_fireball_speed();
+    left_pillar->set_move_speed(pspeed);
+    left_pillar->set_fire_interval(pfire);
+    left_pillar->set_fireball_speed(pfball);
+    right_pillar->set_move_speed(pspeed);
+    right_pillar->set_fire_interval(pfire);
+    right_pillar->set_fireball_speed(pfball);
+
     if (state.stage >= 4) {
         int num_with_holes = state.stage - 3;
         if (num_with_holes > (int)platforms.size())
@@ -119,7 +142,7 @@ void Game::run() {
         controller.handle_input(dt.asSeconds());
         if (state.phase == GameState::Phase::Playing && !state.paused)
             update(dt.asSeconds());
-        view.draw(state, player, platforms, ladders, barrels, dk, lava_anim, coins, powerup.get());
+        view.draw(state, player, platforms, ladders, barrels, dk, lava_anim, powerup.get(), heart_pickup.get(), left_pillar.get(), right_pillar.get());
     }
 }
 
@@ -130,6 +153,12 @@ void Game::update(float dt) {
     state.stage_timer += dt;
 
     player.update(dt);
+
+    // Keep the player inside the side bars (where flame shooters run)
+    float half = player.get_bounds().size.x / 2.f;
+    float bar_left = (left_pillar ? left_pillar->get_pos().x : 35.f) + half;
+    float bar_right = (right_pillar ? right_pillar->get_pos().x : 765.f) - half;
+    player.clamp_x(bar_left, bar_right);
 
     // Ladder top/bottom clamping
     if (player.is_climbing()) {
@@ -269,18 +298,17 @@ void Game::update(float dt) {
             ++it;
     }
 
-    // Coins
-    for (auto& c : coins) c.update(dt);
-    for (auto it = coins.begin(); it != coins.end();) {
-        if (it->is_alive() && player.get_bounds().findIntersection(it->get_bounds()).has_value()) {
-            it->collect();
-            state.coins++;
+    // Pillar enemies
+    if (left_pillar) left_pillar->update(dt);
+    if (right_pillar) right_pillar->update(dt);
+
+    // HeartPickup
+    if (heart_pickup) {
+        heart_pickup->update(dt);
+        if (heart_pickup->is_active() && player.get_bounds().findIntersection(heart_pickup->get_bounds()).has_value()) {
+            heart_pickup->collect();
+            if (state.lives < 3) state.lives++;  // Max 3 hearts
         }
-        if (it->is_alive()) ++it; else it = coins.erase(it);
-    }
-    if (coins.empty() && !state.stage_bonus_collected) {
-        state.lives++;
-        state.stage_bonus_collected = true;
     }
 
     // PowerUp
@@ -303,6 +331,8 @@ void Game::update(float dt) {
             state.crowns = 0;
             play_random_music();
         } else {
+            auto ppos = player.get_pos();
+            place_god_powerup(ppos.x, ppos.y);
             start_game();
         }
     }
@@ -310,7 +340,7 @@ void Game::update(float dt) {
     // Win: player reached top platform near princess
     if (!platforms.empty()) {
         float top_y = platforms[0].get_bounds().position.y;
-        if (player.get_pos().y < top_y + 30 && player.get_pos().x < 150 && state.phase == GameState::Phase::Playing) {
+        if (player.get_pos().y < top_y + 30 && player.get_pos().x < 100 && state.phase == GameState::Phase::Playing) {
             state.crowns++;
             int si = state.stage - 1;
             if (state.stage_timer < state.records.stage_times[si] || state.records.stage_times[si] < 0)
@@ -325,30 +355,33 @@ void Game::update(float dt) {
     }
 }
 
-void Game::spawn_barrel() {
-    if (platforms.empty()) return;
-    float y = platforms[0].get_bounds().position.y;
-    barrels.push_back(std::make_unique<Barrel>(60.f, y, state.get_barrel_speed(), 0));
-}
-
-void Game::spawn_pickups() {
-    coins.clear();
-    powerup.reset();
-    state.stage_bonus_collected = false;
-    for (int i = 0; i < 5; i++) {
-        int pi = std::rand() % (int)(platforms.size() - 1) + 1;
-        auto pb = platforms[pi].get_bounds();
-        float x = pb.position.x + 60.f + (std::rand() % 580);
-        coins.emplace_back(x, pb.position.y);
-    }
-    int ppi = std::rand() % (int)(platforms.size() - 1) + 1;
-    auto ppb = platforms[ppi].get_bounds();
-    float px = ppb.position.x + 60.f + (std::rand() % 580);
-    powerup = std::make_unique<PowerUp>(px, ppb.position.y);
-}
-
 void Game::check_collisions() {
     if (player.is_invincible()) return;
+
+    // Fireballs from pillar enemies
+    for (auto& e : {left_pillar.get(), right_pillar.get()}) {
+        if (!e) continue;
+        for (auto& fb : e->get_fireballs()) {
+            if (!fb.alive) continue;
+            sf::FloatRect fb_bounds{{fb.pos.x - 5.f, fb.pos.y - 5.f}, {10.f, 10.f}};
+            if (player.get_bounds().findIntersection(fb_bounds).has_value()) {
+                fb.alive = false;
+                state.lives--;
+                if (state.lives <= 0) {
+                    state.phase = GameState::Phase::GameOver;
+                    player.set_dead(true);
+                    state.crowns = 0;
+                    play_random_music();
+                } else {
+                    auto ppos = player.get_pos();
+                    powerup = std::make_unique<PowerUp>(ppos.x, ppos.y);
+                    start_game();
+                }
+                return;
+            }
+        }
+    }
+
     for (auto& b : barrels) {
         if (player.get_bounds().findIntersection(b->get_bounds()).has_value()) {
             state.lives--;
@@ -358,9 +391,53 @@ void Game::check_collisions() {
                 state.crowns = 0;
                 play_random_music();
             } else {
+                auto ppos = player.get_pos();
+                powerup = std::make_unique<PowerUp>(ppos.x, ppos.y);
                 start_game();
             }
             return;
         }
     }
+}
+
+void Game::spawn_barrel() {
+    if (platforms.empty()) return;
+    float y = platforms[0].get_bounds().position.y;
+    barrels.push_back(std::make_unique<Barrel>(60.f, y, state.get_barrel_speed(), 0));
+}
+
+// Place the god-mode pickup just above whichever platform spans this x-position.
+// Falls back to the bottom (spawn) platform so it is always reachable.
+void Game::place_god_powerup(float px, float py) {
+    float top_y = platforms.empty() ? 710.f : platforms.back().get_bounds().position.y;
+    for (auto& p : platforms) {
+        auto pb = p.get_bounds();
+        if (px >= pb.position.x && px <= pb.position.x + pb.size.x) {
+            top_y = pb.position.y;
+            break;
+        }
+    }
+    powerup = std::make_unique<PowerUp>(px - 12.f, top_y - 14.f);
+    (void)py;
+}
+
+void Game::spawn_pickups() {
+    powerup.reset();
+    heart_pickup.reset();
+    state.stage_bonus_collected = false;
+
+    // Invincible pickup (god mode) only on stage 1, in the middle of the spawn platform.
+    if (state.stage == 1) {
+        auto spawn_pb = platforms.back().get_bounds();
+        float center_x = spawn_pb.position.x + spawn_pb.size.x / 2.f;
+        place_god_powerup(center_x, spawn_pb.position.y);
+    }
+
+    // Heart pickup - one per stage, on a different platform
+    int ppi = (int)platforms.size() - 1;
+    int hpi = std::rand() % (int)(platforms.size() - 1) + 1;
+    if (hpi == ppi && platforms.size() > 2) hpi = (hpi + 1) % (int)platforms.size();
+    auto hpb = platforms[hpi].get_bounds();
+    float hx = hpb.position.x + 60.f + (std::rand() % 580);
+    heart_pickup = std::make_unique<HeartPickup>(hx, hpb.position.y - 10.f);
 }

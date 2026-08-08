@@ -1,13 +1,13 @@
-#ifndef DONKEYKONG_H
-#define DONKEYKONG_H
+#ifndef DK_BOSS_H
+#define DK_BOSS_H
 
 #include <SFML/Graphics.hpp>
 
-/// The Donkey Kong boss character at the top of the level.
+/// The boss character at the top of the level.
 /// Has a unique sprite per stage (1-8).
-class DonkeyKong {
+class Boss {
 public:
-    DonkeyKong(float x, float y, int stage);
+    Boss(float x, float y, int stage);
 
     void draw(sf::RenderWindow& win) const;
 

@@ -1,6 +1,6 @@
-# Donkey Kong
+# Ladder Climber
 
-A C++ Donkey Kong remake with 9 stages, 8 unique bosses, procedural level generation, and a music system. Built with SFML 3.0 following the Model-View-Controller pattern.
+A C++ Donkey Kong-style platformer remake with 9 stages, 8 unique bosses, procedural level generation, and a music system. Built with SFML 3.0 following the Model-View-Controller pattern.
 
 ## Gameplay
 
@@ -32,7 +32,7 @@ A C++ Donkey Kong remake with 9 stages, 8 unique bosses, procedural level genera
 - `Player` — position, velocity, jump/climb state, animation
 - `Platform` — segmented platforms with destructible holes; `Ladder` struct
 - `Barrel` — rolling obstacle with platform collision
-- `DonkeyKong` — boss character with per-stage sprite
+- `Boss` — boss character with per-stage sprite
 - `GameState` — stage, crowns, lives, timers, records, phase enum
 
 **View** (`src/view/`)
@@ -71,7 +71,7 @@ cd app
 mkdir build && cd build
 cmake ..
 cmake --build . -j4
-LD_LIBRARY_PATH=bin ./bin/DonkeyKong
+LD_LIBRARY_PATH=bin ./bin/LadderClimber
 ```
 
 ### Tests
@@ -79,13 +79,13 @@ LD_LIBRARY_PATH=bin ./bin/DonkeyKong
 ```bash
 cd app/build
 cmake --build . -j4
-LD_LIBRARY_PATH=bin ./bin/DonkeyKong_test
+LD_LIBRARY_PATH=bin ./bin/LadderClimber_test
 ```
 
 ## File structure
 
 ```
-donkey-kong/
+ladder-climber/
 ├── app/
 │   ├── CMakeLists.txt
 │   ├── src/
@@ -96,7 +96,10 @@ donkey-kong/
 │   │   │   ├── Player.hpp / Player.cpp
 │   │   │   ├── Platform.hpp / Platform.cpp
 │   │   │   ├── Barrel.hpp / Barrel.cpp
-│   │   │   └── DonkeyKong.hpp / DonkeyKong.cpp
+│   │   │   ├── Boss.hpp / Boss.cpp
+│   │   │   ├── PillarEnemy.hpp / PillarEnemy.cpp
+│   │   │   ├── PowerUp.hpp / PowerUp.cpp
+│   │   │   └── HeartPickup.hpp / HeartPickup.cpp
 │   │   ├── view/
 │   │   │   └── GameView.hpp / GameView.cpp
 │   │   ├── control/
@@ -107,10 +110,9 @@ donkey-kong/
 │   │   ├── GameStateTest.cpp
 │   │   ├── PlayerTest.cpp
 │   │   ├── BarrelTest.cpp
-│   │   ├── CoinTest.cpp
 │   │   ├── PowerUpTest.cpp
 │   │   ├── PlatformTest.cpp
-│   │   └── DonkeyKongTest.cpp
+│   │   └── BossTest.cpp
 │   └── assets/
 │       ├── sprites/    # generated .png files
 │       ├── music/      # .mp3 files
@@ -123,7 +125,7 @@ donkey-kong/
 ### Build the image
 
 ```bash
-docker build -t donkey-kong .
+docker build -t ladder-climber .
 ```
 
 ### Run the game (Linux — native, not WSL)
@@ -135,7 +137,7 @@ docker run --rm \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /run/user/$(id -u)/pulse:/run/user/1000/pulse \
     --network host \
-    donkey-kong
+    ladder-climber
 ```
 
 ### Run the game (WSLg)
@@ -150,7 +152,7 @@ docker run --rm \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v /mnt/wslg:/mnt/wslg \
     --network host \
-    donkey-kong
+    ladder-climber
 ```
 
 ### Run the game (Windows — VcXsrv or X410)
@@ -159,13 +161,13 @@ First install and launch [VcXsrv](https://sourceforge.net/projects/vcxsrv/) (fre
 In the display settings, check **"Disable access control"**. Then:
 
 ```powershell
-docker run --rm -e DISPLAY=host.docker.internal:0 donkey-kong
+docker run --rm -e DISPLAY=host.docker.internal:0 ladder-climber
 ```
 
 ### Run tests in Docker
 
 ```bash
-docker run --rm donkey-kong /bin/bash -c "cd /project/app && xvfb-run ./build/bin/DonkeyKong_test"
+docker run --rm ladder-climber /bin/bash -c "cd /project/app && xvfb-run ./build/bin/LadderClimber_test"
 ```
 
 ## Dependencies

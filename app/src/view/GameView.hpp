@@ -10,9 +10,11 @@ class Player;
 class Platform;
 struct Ladder;
 class Barrel;
-class DonkeyKong;
+class Boss;
 class Coin;
 class PowerUp;
+class PillarEnemy;
+class HeartPickup;
 class GameState;
 
 class GameView {
@@ -23,14 +25,17 @@ public:
               const std::vector<Platform>& platforms,
               const std::vector<Ladder>& ladders,
               const std::vector<std::unique_ptr<Barrel>>& barrels,
-              const DonkeyKong& dk, float lava_anim,
-              const std::vector<Coin>& coins,
-              const PowerUp* powerup);
+              const Boss& dk, float lava_anim,
+              const PowerUp* powerup,
+              const HeartPickup* heart_pickup,
+              const PillarEnemy* left_pillar,
+              const PillarEnemy* right_pillar);
 
     sf::FloatRect get_menu_btn_bounds() const;
     sf::FloatRect get_pause_resume_btn_bounds() const;
     sf::FloatRect get_pause_reset_btn_bounds() const;
     sf::FloatRect get_mute_btn_bounds() const;
+    void update_view();
 
     static sf::FloatRect title_btn_easy();
     static sf::FloatRect title_btn_normal();
@@ -40,12 +45,16 @@ public:
 
     static sf::FloatRect custom_speed_track();
     static sf::FloatRect custom_interval_track();
+    static sf::FloatRect custom_pillar_speed_track();
+    static sf::FloatRect custom_fire_rate_track();
+    static sf::FloatRect custom_fire_speed_track();
     static sf::FloatRect custom_btn_play();
 
     sf::RenderWindow window;
 
 private:
     sf::Font font;
+    sf::View game_view;
 
     sf::Text title_text{font};
     sf::Text status_text{font};
@@ -74,6 +83,7 @@ private:
     sf::Texture plat_tex;
     sf::Texture ladder_tex;
     sf::Texture lava_tex;
+    sf::Texture boss_tex;
     sf::RectangleShape bg_shape{{800, 750}};
 
     sf::FloatRect draw_btn(sf::FloatRect rect, const std::string& label, const sf::Color& color);

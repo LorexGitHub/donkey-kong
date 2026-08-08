@@ -17,8 +17,9 @@ float Player::get_current_speed() const {
 }
 
 void Player::jump() {
-    if (climbing || dead) return;
+    if (dead) return;
     if (jumps_left <= 0) return;
+    climbing = false;
 
     jumps_left--;
 
@@ -43,6 +44,12 @@ void Player::stop_on_ladder() {
     vel.y = 0;
     vel.x = 0;
     dir = 0;
+}
+
+void Player::clamp_x(float lo, float hi) {
+    if (pos.x < lo) pos.x = lo;
+    if (pos.x > hi) pos.x = hi;
+    shape.setPosition(pos);
 }
 
 void Player::bump_head(float y) {
@@ -101,9 +108,6 @@ void Player::update(float dt) {
         vel.y = 0;
         set_on_ground(true);
     }
-    if (pos.x < 12)  pos.x = 12;
-    if (pos.x > 788) pos.x = 788;
-
     shape.setPosition(pos);
 
     if (on_ground && dir != 0) {

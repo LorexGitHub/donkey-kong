@@ -26,7 +26,7 @@ COPY . .
 
 WORKDIR /project/app/build
 RUN cmake .. -DCMAKE_BUILD_TYPE=Release \
-    && make -j$(nproc) DonkeyKong_test DonkeyKong
+    && make -j$(nproc) LadderClimber_test LadderClimber
 
 WORKDIR /project/app
-CMD ["./build/bin/DonkeyKong"]
+CMD ["./build/bin/LadderClimber"]

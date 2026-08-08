@@ -10,9 +10,10 @@
 #include "model/Player.hpp"
 #include "model/Platform.hpp"
 #include "model/Barrel.hpp"
-#include "model/DonkeyKong.hpp"
-#include "model/Coin.hpp"
+#include "model/Boss.hpp"
 #include "model/PowerUp.hpp"
+#include "model/PillarEnemy.hpp"
+#include "model/HeartPickup.hpp"
 #include "view/GameView.hpp"
 #include "control/GameController.hpp"
 
@@ -31,18 +32,21 @@ private:
     void setup_stage();
     void spawn_barrel();
     void spawn_pickups();
+    void place_god_powerup(float px, float py);
     void check_collisions();
     void play_random_music();
 
     GameState state;
     GameView view;
     Player player;
-    DonkeyKong dk{60.f, 140.f, 1};
+    Boss dk{60.f, 140.f, 1};
     std::vector<Platform> platforms;
     std::vector<Ladder> ladders;
     std::vector<std::unique_ptr<Barrel>> barrels;
-    std::vector<Coin> coins;
     std::unique_ptr<PowerUp> powerup;
+    std::unique_ptr<HeartPickup> heart_pickup;
+    std::unique_ptr<PillarEnemy> left_pillar;
+    std::unique_ptr<PillarEnemy> right_pillar;
     float barrel_timer = 0;
     float lava_anim = 0;
     sf::Music music;

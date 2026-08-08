@@ -100,7 +100,7 @@ static sf::Image make_barrel() {
 }
 
 // DK: 48x56 (smaller hitbox)
-static sf::Image make_donkey_kong() {
+static sf::Image make_boss() {
     sf::Image img;
     img.resize({48, 56}, sf::Color::Transparent);
     auto p = [&](int x, int y, sf::Color c) { sp(img, {x, y}, c); };
@@ -615,7 +615,7 @@ int main() {
     };
     save(make_player(), "player");
     save(make_barrel(), "barrel");
-    save(make_donkey_kong(), "donkey_kong");
+    save(make_boss(), "boss");
     save(make_princess(), "princess");
     save(make_crown(), "crown");
     save(make_background(), "background");

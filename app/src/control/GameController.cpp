@@ -26,6 +26,11 @@ void GameController::handle_input(float dt) {
             view.window.close();
         }
 
+        if (auto* rz = ev->getIf<sf::Event::Resized>()) {
+            [[maybe_unused]] sf::Vector2u nsz = rz->size;
+            view.update_view();
+        }
+
         if (auto* mb = ev->getIf<sf::Event::MouseButtonPressed>()) {
             sf::Vector2f wp = view.window.mapPixelToCoords(mb->position);
 
@@ -66,6 +71,15 @@ void GameController::handle_input(float dt) {
                 } else if (GameView::custom_interval_track().contains(wp)) {
                     float t = (wp.x - 250.f) / 300.f;
                     state.custom_interval = clamp(0.5f + t * (5.f - 0.5f), 0.5f, 5.f);
+                } else if (GameView::custom_pillar_speed_track().contains(wp)) {
+                    float t = (wp.x - 250.f) / 300.f;
+                    state.custom_pillar_speed = clamp(50.f + t * (250.f - 50.f), 50.f, 250.f);
+                } else if (GameView::custom_fire_rate_track().contains(wp)) {
+                    float t = (wp.x - 250.f) / 300.f;
+                    state.custom_fire_interval = clamp(0.5f + t * (5.f - 0.5f), 0.5f, 5.f);
+                } else if (GameView::custom_fire_speed_track().contains(wp)) {
+                    float t = (wp.x - 250.f) / 300.f;
+                    state.custom_fireball_speed = clamp(120.f + t * (450.f - 120.f), 120.f, 450.f);
                 } else if (GameView::custom_btn_play().contains(wp)) {
                     state.overall_timer = 0;
                     state.lives = 3;
@@ -108,9 +122,8 @@ void GameController::handle_input(float dt) {
                         start_game_fn();
                     }
                 } else {
-                    // Next Stage = menu_btn (keeps overall_timer)
+                    // Next Stage = menu_btn (keeps overall_timer, crowns already incremented)
                     if (view.get_menu_btn_bounds().contains(wp)) {
-                        state.crowns++;
                         state.lives = 3;
                         start_game_fn();
                     }
@@ -123,6 +136,25 @@ void GameController::handle_input(float dt) {
                 }
             }
         }
+    }
+
+    // Stage-skip consideration: on the WON screen, Space advances to the next stage.
+    {
+        bool space_down = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
+        if (state.phase == GameState::Phase::Won && space_down && !jump_key_held) {
+            if (state.crowns >= 9) {
+                state.overall_timer = 0;
+                state.lives = 3;
+                title_fn();
+                start_game_fn();
+            } else {
+                state.lives = 3;
+                start_game_fn();
+            }
+            jump_key_held = true;
+        }
+        if (!space_down)
+            jump_key_held = false;
     }
 
     // Stage skip keys (U = back, I = forward)
@@ -170,8 +202,10 @@ void GameController::handle_input(float dt) {
             else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) ||
                 sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
                 player.move_right();
-            else
+            else if (player.is_climbing())
                 player.stop_on_ladder();
+            else
+                player.stop_horizontal();
         } else {
             if (player.is_climbing())
                 player.set_climbing(false);
