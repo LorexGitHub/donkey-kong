@@ -103,3 +103,7 @@ app/src/model/Boss.cpp Note: Implements per-stage boss logic and attack timing; 
 app/src/tools/gen_sprites.cpp Responsibility: Offline tool to generate sprite PNGs used in assets/sprites/ (placeholder generator for development). Note: Generates images and writes them to app/assets/sprites/; not part of runtime.
 "
 
+Music generation - used a website online to ai generate music (https://tomusic.ai/music/)
+track7 - "Fast 174BPM drum and bass chiptune. Rapid-fire breakbeats, deep sub bass, soaring retro square wave melodies, high-speed futuristic pixel racing theme, intense."
+track8 - "Fast 8-bit J-core rave style. Happy hardcore chiptune hooks, frantic hyperspeed beats, uplifting pixel synth chords, explosive high-energy arcade gaming theme."
+track12 - "High-energy 8bit psytrance. Rolling hypnotic basslines, driving retro synth arpeggios, cosmic alien game sounds, intense fast-paced cyberpunk arcade rave."
