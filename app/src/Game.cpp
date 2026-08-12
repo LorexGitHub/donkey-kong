@@ -21,7 +21,6 @@ void Game::go_to_title() {
     state.lives = 3;
     state.crowns = 0;  // Reset progress so a new run starts from stage 1
     state.last_pickup_stage = 0;
-    state.coins = 0;  // keep for backward compatibility but unused
     barrels.clear();
     powerup.reset();
     heart_pickup.reset();
@@ -63,7 +62,6 @@ void Game::start_game() {
     barrel_timer = 0;
     player.set_position(100.f, 710.f);
     player.set_dead(false);
-    player.set_lives(3);  // Ensure player starts with 3 hearts
     player.set_invincible(0.f);  // Reset invincibility
     dk = Boss(60.f, 140.f, state.stage);
     player.set_climbing(false);
@@ -192,16 +190,7 @@ void Game::update(float dt) {
             float platform_top = ppos.position.y;
 
             if (player_bottom >= platform_top && player_bottom < platform_top + 24 && player.get_vel().y >= 0) {
-                bool on_solid = false;
-                for (int s = 0; s < 10; s++) {
-                    if (!platforms[pi].is_solid(s)) continue;
-                    sf::FloatRect seg = {{ppos.position.x + s * 70.f, ppos.position.y}, {70.f, 14.f}};
-                    if (player.get_bounds().findIntersection(seg).has_value()) {
-                        on_solid = true;
-                        break;
-                    }
-                }
-                if (on_solid) {
+                if (platforms[pi].solid_segment_hit(player.get_bounds())) {
                     float p_left  = ppos.position.x + 12;
                     float p_right = ppos.position.x + ppos.size.x - 12;
                     float px = player.get_pos().x;
@@ -225,16 +214,7 @@ void Game::update(float dt) {
 
                 if (player.get_vel().y < 0 && player.get_pos().y > ppos.position.y &&
                     player_head <= platform_bot && player_head > platform_bot - 16) {
-                    bool on_solid = false;
-                    for (int s = 0; s < 10; s++) {
-                        if (!platforms[pi].is_solid(s)) continue;
-                        sf::FloatRect seg = {{ppos.position.x + s * 70.f, ppos.position.y}, {70.f, 14.f}};
-                        if (player.get_bounds().findIntersection(seg).has_value()) {
-                            on_solid = true;
-                            break;
-                        }
-                    }
-                    if (on_solid) {
+                    if (platforms[pi].solid_segment_hit(player.get_bounds())) {
                         player.bump_head(platform_bot + 32);
                         break;
                     }
@@ -259,17 +239,12 @@ void Game::update(float dt) {
                 float ptop = platforms[pi].get_bounds().position.y;
                 float bbot = (*it)->get_pos().y + 12;
                 if (bbot >= ptop - 4 && bbot < ptop + 20) {
-                    for (int s = 0; s < 10; s++) {
-                        if (!platforms[pi].is_solid(s)) continue;
-                        auto pos = platforms[pi].get_bounds().position;
-                        sf::FloatRect seg = {{pos.x + s * 70.f, pos.y}, {70.f, 14.f}};
-                        if ((*it)->get_bounds().findIntersection(seg).has_value()) {
-                            (*it)->land_on_surface(ptop - 12);
-                            (*it)->set_level(pi);
-                            float bs = state.get_barrel_speed();
-                            (*it)->set_velocity((pi % 2 == 0) ? bs : -bs, 0);
-                            goto barrel_landed;
-                        }
+                    if (platforms[pi].solid_segment_hit((*it)->get_bounds())) {
+                        (*it)->land_on_surface(ptop - 12);
+                        (*it)->set_level(pi);
+                        float bs = state.get_barrel_speed();
+                        (*it)->set_velocity((pi % 2 == 0) ? bs : -bs, 0);
+                        goto barrel_landed;
                     }
                 }
             }
@@ -424,7 +399,6 @@ void Game::place_god_powerup(float px, float py) {
 void Game::spawn_pickups() {
     powerup.reset();
     heart_pickup.reset();
-    state.stage_bonus_collected = false;
 
     // Invincible pickup (god mode) only on stage 1, in the middle of the spawn platform.
     if (state.stage == 1) {

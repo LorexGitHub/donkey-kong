@@ -31,13 +31,7 @@ public:
     bool is_on_ground() const { return on_ground; }
     bool is_climbing() const { return climbing; }
     void set_climbing(bool c) { climbing = c; }
-    bool is_dead() const { return dead; }
-    int get_lives() const { return lives; }
-    void set_lives(int l) { lives = l; }
     int get_jumps_left() const { return jumps_left; }
-    int get_bunny_count() const { return bunny_count; }
-
-    const sf::RectangleShape& get_shape() const { return shape; }
 
 private:
     sf::Vector2f pos;
@@ -54,7 +48,6 @@ private:
     int bunny_count = 0;
     bool invincible = false;
     float invincible_timer = 0;
-    int lives = 3;
 
     float get_current_speed() const;
 

@@ -11,7 +11,6 @@ class Platform;
 struct Ladder;
 class Barrel;
 class Boss;
-class Coin;
 class PowerUp;
 class PillarEnemy;
 class HeartPickup;
@@ -78,7 +77,6 @@ private:
     sf::RectangleShape princess;
     sf::Texture princess_tex;
 
-    sf::Texture crown_tex;
     sf::Texture bg_tex;
     sf::Texture plat_tex;
     sf::Texture ladder_tex;

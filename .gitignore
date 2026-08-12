@@ -32,5 +32,8 @@ Thumbs.db
 *.tmp
 *.bak
 
+# assignment.pdf
+assignment.pdf
+
 # graphify
 graphify-out/

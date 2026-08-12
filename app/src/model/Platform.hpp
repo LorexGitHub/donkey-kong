@@ -25,6 +25,9 @@ public:
     /// Marks a segment as solid or not.
     void set_solid(int s, bool v) { if (s >= 0 && s < 10) segments[s] = v; }
 
+    /// Returns whether any solid segment overlaps the given rect.
+    bool solid_segment_hit(const sf::FloatRect& r) const;
+
 private:
     sf::RectangleShape shape;
     std::vector<bool> segments = std::vector<bool>(10, true);

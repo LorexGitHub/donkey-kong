@@ -4,7 +4,6 @@
 #include "../model/Platform.hpp"
 #include "../model/Barrel.hpp"
 #include "../model/Boss.hpp"
-#include "../model/Coin.hpp"
 #include "../model/PowerUp.hpp"
 #include "../model/PillarEnemy.hpp"
 #include "../model/HeartPickup.hpp"
@@ -94,7 +93,6 @@ GameView::GameView() {
 
     crowns_text.setCharacterSize(24);
     crowns_text.setFillColor(sf::Color::Yellow);
-    [[maybe_unused]] bool crown_loaded = crown_tex.loadFromFile("assets/sprites/crown.png");
 
     stage_text.setCharacterSize(18);
     stage_text.setFillColor(sf::Color{180, 180, 200});
@@ -254,19 +252,6 @@ void GameView::draw(const GameState& state, const Player& player,
         overlay.setFillColor(sf::Color{0, 0, 0, 150});
         window.draw(overlay);
         window.draw(title_text);
-
-        // Crown display
-        std::string cstr = std::to_string(state.crowns);
-        crowns_text.setString(cstr);
-        crowns_text.setPosition({400, 170});
-        crowns_text.setOrigin({crowns_text.getLocalBounds().size.x / 2, 0});
-        window.draw(crowns_text);
-        if (crown_tex.getSize().x > 0) {
-            sf::Sprite crown_spr(crown_tex);
-            crown_spr.setOrigin({16, 16});
-            crown_spr.setPosition({400 - crowns_text.getLocalBounds().size.x / 2 - 24, 174});
-            window.draw(crown_spr);
-        }
 
         // Difficulty buttons
         auto is_sel = [&](GameState::Difficulty d) { return state.difficulty == d; };
@@ -762,20 +747,108 @@ void GameView::draw(const GameState& state, const Player& player,
 
     // ── STAGE COMPLETE / WON OVERLAY ──
     if (state.phase == GameState::Phase::Won) {
+        if (state.crowns >= 9) {
+            // ── GRAND CONGRATULATIONS — final boss (stage 9) defeated ──
+            sf::RectangleShape overlay({800, 750});
+            overlay.setFillColor(sf::Color{0, 0, 0, 160});
+            window.draw(overlay);
+
+            // Celebrate: row of crowns across the top
+            for (int c = 0; c < 9; c++) {
+                sf::CircleShape star(8.f);
+                star.setFillColor(c == 8 ? sf::Color{255, 220, 60} : sf::Color{230, 190, 40});
+                star.setPosition({400 + (c - 4) * 60.f, 90 + (c % 2) * 10.f});
+                window.draw(star);
+            }
+
+            status_text.setString("GRAND CONGRATULATIONS!");
+            status_text.setCharacterSize(42);
+            auto stb2 = status_text.getLocalBounds();
+            status_text.setOrigin({stb2.size.x / 2, 0});
+            status_text.setPosition({400, 150});
+            status_text.setFillColor(sf::Color::Yellow);
+            window.draw(status_text);
+
+            sf::Text sub(font);
+            sub.setString("You defeated the final boss!");
+            sub.setCharacterSize(26);
+            sub.setFillColor(sf::Color{255, 220, 100});
+            auto subb = sub.getLocalBounds();
+            sub.setOrigin({subb.size.x / 2, 0});
+            sub.setPosition({400, 215});
+            window.draw(sub);
+
+            // Final boss sprite, scaled up
+            if (boss_tex.getSize().x > 0) {
+                sf::Sprite boss_spr(boss_tex);
+                auto bs = boss_tex.getSize();
+                float bsc = 90.f / (float)(bs.x > 0 ? bs.x : 90);
+                boss_spr.setScale({bsc, bsc});
+                boss_spr.setOrigin({(float)bs.x / 2.f, (float)bs.y / 2.f});
+                boss_spr.setPosition({400, 300});
+                window.draw(boss_spr);
+            }
+
+            bool new_overall_rec = (state.overall_timer < state.records.overall_time || state.records.overall_time < 0);
+            std::string ov_line = "FINAL TIME: " + GameState::fmt_time(state.overall_timer);
+            if (new_overall_rec) ov_line += "   NEW RECORD!";
+            sf::Text ov_text(font);
+            ov_text.setString(ov_line);
+            ov_text.setCharacterSize(20);
+            ov_text.setFillColor(new_overall_rec ? sf::Color::Yellow : sf::Color::White);
+            auto ovt = ov_text.getLocalBounds();
+            ov_text.setOrigin({ovt.size.x / 2, 0});
+            ov_text.setPosition({400, 350});
+            window.draw(ov_text);
+
+            if (state.records.overall_time >= 0 && !new_overall_rec) {
+                sf::Text prev_ov(font);
+                prev_ov.setString("BEST: " + GameState::fmt_time(state.records.overall_time));
+                prev_ov.setCharacterSize(18);
+                prev_ov.setFillColor(sf::Color{180, 180, 200});
+                auto povt = prev_ov.getLocalBounds();
+                prev_ov.setOrigin({povt.size.x / 2, 0});
+                prev_ov.setPosition({400, 375});
+                window.draw(prev_ov);
+            }
+
+            // Buttons: PLAY AGAIN (menu_btn) + MENU (pause_reset_btn), same hitboxes as usual
+            float bx[] = {300, 500};
+            const char* labels[] = {"PLAY AGAIN", "MENU"};
+            sf::RectangleShape* btns[] = {&menu_btn, &pause_reset_btn};
+            sf::Text* btn_texts[] = {&menu_btn_text, &pause_reset_text};
+            for (int bi = 0; bi < 2; bi++) {
+                btns[bi]->setSize({160, 50});
+                btns[bi]->setOrigin({80, 25});
+                btns[bi]->setPosition({bx[bi], 430});
+                btns[bi]->setFillColor(sf::Color{60, 60, 180});
+                window.draw(*btns[bi]);
+                btn_texts[bi]->setString(labels[bi]);
+                btn_texts[bi]->setCharacterSize(24);
+                btn_texts[bi]->setFillColor(sf::Color::White);
+                auto tb = btn_texts[bi]->getLocalBounds();
+                btn_texts[bi]->setOrigin({tb.position.x + tb.size.x / 2, tb.position.y + tb.size.y / 2});
+                btn_texts[bi]->setPosition({bx[bi], 430});
+                window.draw(*btn_texts[bi]);
+            }
+
+            sf::Text skip_hint(font);
+            skip_hint.setString("Press SPACE to play again");
+            skip_hint.setCharacterSize(18);
+            skip_hint.setFillColor(sf::Color{200, 200, 220});
+            auto skh = skip_hint.getLocalBounds();
+            skip_hint.setOrigin({skh.size.x / 2, 0});
+            skip_hint.setPosition({400, 505});
+            window.draw(skip_hint);
+        } else {
         sf::RectangleShape overlay({800, 750});
         overlay.setFillColor(sf::Color{0, 0, 0, 150});
         window.draw(overlay);
         int si = state.stage - 1;
         float prev_stage = state.records.stage_times[si];
         bool new_stage_rec = (state.stage_timer < prev_stage || prev_stage < 0);
-        bool new_overall_rec = false;
-        if (state.crowns >= 9 && (state.overall_timer < state.records.overall_time || state.records.overall_time < 0))
-            new_overall_rec = true;
 
-        if (state.crowns >= 9)
-            status_text.setString("CONGRATULATIONS!");
-        else
-            status_text.setString("STAGE COMPLETE!");
+        status_text.setString("STAGE COMPLETE!");
         auto stb = status_text.getLocalBounds();
         status_text.setOrigin({stb.size.x / 2, 0});
         status_text.setPosition({400, 120});
@@ -803,30 +876,7 @@ void GameView::draw(const GameState& state, const Player& player,
             window.draw(prev_st);
         }
 
-        if (state.crowns >= 9) {
-            sf::Text ov_text(font);
-            ov_text.setCharacterSize(18);
-            std::string ov_line = "OVERALL TIME: " + GameState::fmt_time(state.overall_timer);
-            if (new_overall_rec) ov_line += "   NEW RECORD!";
-            ov_text.setString(ov_line);
-            ov_text.setFillColor(new_overall_rec ? sf::Color::Yellow : sf::Color::White);
-            auto ovt = ov_text.getLocalBounds();
-            ov_text.setOrigin({ovt.size.x / 2, 0});
-            ov_text.setPosition({400, 240});
-            window.draw(ov_text);
-
-            if (state.records.overall_time >= 0) {
-                sf::Text prev_ov(font);
-                prev_ov.setString("BEST:         " + GameState::fmt_time(state.records.overall_time));
-                prev_ov.setCharacterSize(18);
-                prev_ov.setFillColor(sf::Color{180, 180, 200});
-                auto povt = prev_ov.getLocalBounds();
-                prev_ov.setOrigin({povt.size.x / 2, 0});
-                prev_ov.setPosition({400, 265});
-                window.draw(prev_ov);
-            }
-        } else {
-            sf::Text ov_text(font);
+        sf::Text ov_text(font);
             ov_text.setCharacterSize(18);
             ov_text.setString("OVERALL: " + GameState::fmt_time(state.overall_timer));
             ov_text.setFillColor(sf::Color::White);
@@ -834,7 +884,6 @@ void GameView::draw(const GameState& state, const Player& player,
             ov_text.setOrigin({ovt.size.x / 2, 0});
             ov_text.setPosition({400, 240});
             window.draw(ov_text);
-        }
 
         std::string sstr2 = std::to_string(state.stage);
         stage_text.setString(sstr2);
@@ -843,10 +892,7 @@ void GameView::draw(const GameState& state, const Player& player,
         window.draw(stage_text);
 
         float bx[] = {300, 500};
-        const char* labels[] = {
-            state.crowns >= 9 ? "PLAY AGAIN" : "NEXT STAGE",
-            "MENU"
-        };
+        const char* labels[] = {"NEXT STAGE", "MENU"};
         sf::RectangleShape* btns[] = {&menu_btn, &pause_reset_btn};
         sf::Text* btn_texts[] = {&menu_btn_text, &pause_reset_text};
         for (int bi = 0; bi < 2; bi++) {
@@ -872,6 +918,7 @@ void GameView::draw(const GameState& state, const Player& player,
         skip_hint.setOrigin({skh.size.x / 2, 0});
         skip_hint.setPosition({400, 405});
         window.draw(skip_hint);
+        }
     }
 
     window.display();
