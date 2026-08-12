@@ -1,15 +1,10 @@
 #include "HeartPickup.hpp"
 #include <cmath>
 
-HeartPickup::HeartPickup(float x, float y) : pos(x, y) {}
-
-void HeartPickup::update(float dt) {
-    if (!active) return;
-    anim_timer += dt * 3.f;
-}
+HeartPickup::HeartPickup(float x, float y) : Pickup(x, y, 3.f) {}
 
 void HeartPickup::draw(sf::RenderWindow& win) const {
-    if (!active) return;
+    if (!is_active()) return;
 
     float pulse = 1.f + std::sin(anim_timer) * 0.15f;
     float s = SIZE * pulse;

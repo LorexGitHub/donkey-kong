@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "model/Barrel.hpp"
 
+
 TEST(BarrelTest, DefaultAlive) {
     Barrel b(100, 200, 180, 0);
     EXPECT_TRUE(b.is_alive());

@@ -11,9 +11,8 @@ class Platform;
 struct Ladder;
 class Barrel;
 class Boss;
-class PowerUp;
+class Pickup;
 class PillarEnemy;
-class HeartPickup;
 class GameState;
 
 class GameView {
@@ -25,8 +24,8 @@ public:
               const std::vector<Ladder>& ladders,
               const std::vector<std::unique_ptr<Barrel>>& barrels,
               const Boss& dk, float lava_anim,
-              const PowerUp* powerup,
-              const HeartPickup* heart_pickup,
+              const Pickup* powerup,
+              const Pickup* heart_pickup,
               const PillarEnemy* left_pillar,
               const PillarEnemy* right_pillar);
 

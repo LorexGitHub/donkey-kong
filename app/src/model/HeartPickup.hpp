@@ -1,22 +1,14 @@
 #ifndef DK_HEARTPICKUP_H
 #define DK_HEARTPICKUP_H
 
-#include <SFML/Graphics.hpp>
+#include "Pickup.hpp"
 
-class HeartPickup {
+class HeartPickup : public Pickup {
 public:
-    HeartPickup(float x, float y);
-    void update(float dt);
-    void draw(sf::RenderWindow& win) const;
-    sf::FloatRect get_bounds() const;
-    sf::Vector2f get_pos() const { return pos; }
-    bool is_active() const { return active; }
-    void collect() { active = false; }
-
+    HeartPickup(float x, float y) : Pickup(x, y, 3.f) {}
+    void draw(sf::RenderWindow& win) const override;
+    sf::FloatRect get_bounds() const override;
 private:
-    sf::Vector2f pos;
-    bool active = true;
-    float anim_timer = 0;
     static constexpr float SIZE = 14.f;
 };
 

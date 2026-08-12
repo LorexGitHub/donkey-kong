@@ -1,15 +1,10 @@
 #include "PowerUp.hpp"
 #include <cmath>
 
-PowerUp::PowerUp(float x, float y) : pos(x, y) {}
-
-void PowerUp::update(float dt) {
-    if (!active) return;
-    anim_timer += dt * 4.f;
-}
+PowerUp::PowerUp(float x, float y) : Pickup(x, y, 4.f) {}
 
 void PowerUp::draw(sf::RenderWindow& win) const {
-    if (!active) return;
+    if (!is_active()) return;
     float pulse = 1.f + std::sin(anim_timer) * 0.2f;
     sf::CircleShape glow(SIZE * pulse * 2.f);
     glow.setFillColor(sf::Color(100, 255, 255, 50));

@@ -4,9 +4,8 @@
 #include "../model/Platform.hpp"
 #include "../model/Barrel.hpp"
 #include "../model/Boss.hpp"
-#include "../model/PowerUp.hpp"
+#include "../model/Pickup.hpp"
 #include "../model/PillarEnemy.hpp"
-#include "../model/HeartPickup.hpp"
 #include <cmath>
 
 // ── Layout constants for title screen ──
@@ -210,8 +209,8 @@ void GameView::draw(const GameState& state, const Player& player,
                     const std::vector<Ladder>& ladders,
                     const std::vector<std::unique_ptr<Barrel>>& barrels,
                     const Boss& dk, float lava_anim,
-                    const PowerUp* powerup,
-                    const HeartPickup* heart_pickup,
+                    const Pickup* powerup,
+                    const Pickup* heart_pickup,
                     const PillarEnemy* left_pillar,
                     const PillarEnemy* right_pillar) {
 

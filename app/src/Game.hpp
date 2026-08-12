@@ -12,6 +12,7 @@
 #include "model/Barrel.hpp"
 #include "model/Boss.hpp"
 #include "model/PowerUp.hpp"
+#include "model/Pickup.hpp"
 #include "model/PillarEnemy.hpp"
 #include "model/HeartPickup.hpp"
 #include "view/GameView.hpp"
@@ -43,8 +44,8 @@ private:
     std::vector<Platform> platforms;
     std::vector<Ladder> ladders;
     std::vector<std::unique_ptr<Barrel>> barrels;
-    std::unique_ptr<PowerUp> powerup;
-    std::unique_ptr<HeartPickup> heart_pickup;
+    std::unique_ptr<Pickup> powerup;
+    std::unique_ptr<Pickup> heart_pickup;
     std::unique_ptr<PillarEnemy> left_pillar;
     std::unique_ptr<PillarEnemy> right_pillar;
     float barrel_timer = 0;
