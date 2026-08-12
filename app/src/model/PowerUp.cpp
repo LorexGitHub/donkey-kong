@@ -1,8 +1,6 @@
 #include "PowerUp.hpp"
 #include <cmath>
 
-PowerUp::PowerUp(float x, float y) : Pickup(x, y, 4.f) {}
-
 void PowerUp::draw(sf::RenderWindow& win) const {
     if (!is_active()) return;
     float pulse = 1.f + std::sin(anim_timer) * 0.2f;

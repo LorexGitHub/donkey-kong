@@ -1,8 +1,6 @@
 #include "HeartPickup.hpp"
 #include <cmath>
 
-HeartPickup::HeartPickup(float x, float y) : Pickup(x, y, 3.f) {}
-
 void HeartPickup::draw(sf::RenderWindow& win) const {
     if (!is_active()) return;
 
