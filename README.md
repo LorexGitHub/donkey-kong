@@ -94,8 +94,10 @@ LD_LIBRARY_PATH=bin ./bin/LadderClimber_test
 The project builds and runs on the university JupyterHub. Because a JupyterHub
 session has no physical display, SFML runs headlessly against **Xvfb** (a
 virtual X server); the game renders and plays normally inside it. The hub image
-already ships the C++ toolchain (gcc/g++, CMake) and Xvfb, and the fonts,
-sprites and music live inside the repository — so **no root access is needed**.
+already ships the C++ toolchain (gcc/g++, CMake), Xvfb and a **prebuilt SFML
+3.0** from the course template (`run.sh` finds it automatically and links
+against it instead of building SFML from source). The fonts, sprites and music
+live inside the repository — so **no root access is needed**.
 
 Run everything (build → tests → headless smoke run) with:
 
@@ -105,8 +107,9 @@ Run everything (build → tests → headless smoke run) with:
 
 ### Step by step (open a Terminal in JupyterLab)
 
-**1. Build** — CMake downloads SFML 3.0 and GoogleTest on the first run
-(network access is required):
+**1. Build** — CMake uses the prebuilt SFML 3.0 from the course template (already
+on the hub; no `sudo` or `lib*-dev` packages needed). Only GoogleTest is
+downloaded on the first run (network access is required):
 
 ```bash
 cd app
