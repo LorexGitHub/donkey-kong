@@ -5,7 +5,13 @@ and beat your best time. Built with SFML 3.0 following the Model-View-Controller
 
 ## Demo
 
-https://github.com/user-attachments/assets/2963be98-4ee4-4741-a178-9f643afc5b24
+https://github.com/user-attachments/assets/126c1854-bd70-4179-939d-3c2720d1b24b
+
+
+
+
+
+
 
 ## Run
 
