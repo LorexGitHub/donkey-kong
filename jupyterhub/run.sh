@@ -39,7 +39,7 @@ fi
 
 echo "==> Building"
 cmake -S . -B build "${CMAKE_ARGS[@]}"
-cmake --build build -j"$(nproc)"
+cmake --build build -j4
 
 echo "==> Running unit tests (headless)"
 xvfb-run -a ./build/bin/LadderClimber_test
