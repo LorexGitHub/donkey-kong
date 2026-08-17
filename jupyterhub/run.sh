@@ -1,21 +1,13 @@
 #!/usr/bin/env bash
 # Build, test and smoke-run Ladder Climber on the Uni Münster JupyterHub.
 # JupyterHub has no physical display, so everything runs headless via Xvfb.
+# The hub image already ships the C++ toolchain and Xvfb; no root needed.
 #
 # Usage:  ./jupyterhub/run.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT/app"
-
-echo "==> Installing system dependencies"
-sudo apt-get update
-sudo apt-get install -y \
-    build-essential cmake git \
-    libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
-    libgl1-mesa-dev libglu1-mesa-dev libudev-dev \
-    libfreetype-dev libvorbis-dev libogg-dev libflac-dev \
-    xvfb fonts-dejavu-core
 
 echo "==> Building (downloads SFML 3.0 + GoogleTest on first run)"
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

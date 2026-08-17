@@ -93,9 +93,11 @@ LD_LIBRARY_PATH=bin ./bin/LadderClimber_test
 
 The project builds and runs on the university JupyterHub. Because a JupyterHub
 session has no physical display, SFML runs headlessly against **Xvfb** (a
-virtual X server); the game renders and plays normally inside it.
+virtual X server); the game renders and plays normally inside it. The hub image
+already ships the C++ toolchain (gcc/g++, CMake) and Xvfb, and the fonts,
+sprites and music live inside the repository — so **no root access is needed**.
 
-Run everything (dependencies → build → tests → headless smoke run) with:
+Run everything (build → tests → headless smoke run) with:
 
 ```bash
 ./jupyterhub/run.sh
@@ -103,18 +105,7 @@ Run everything (dependencies → build → tests → headless smoke run) with:
 
 ### Step by step (open a Terminal in JupyterLab)
 
-**1. Install dependencies** (once per session):
-
-```bash
-sudo apt-get update && sudo apt-get install -y \
-    build-essential cmake git \
-    libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
-    libgl1-mesa-dev libglu1-mesa-dev libudev-dev \
-    libfreetype-dev libvorbis-dev libogg-dev libflac-dev \
-    xvfb fonts-dejavu-core
-```
-
-**2. Build** — CMake downloads SFML 3.0 and GoogleTest on the first run
+**1. Build** — CMake downloads SFML 3.0 and GoogleTest on the first run
 (network access is required):
 
 ```bash
@@ -123,14 +114,14 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j4
 ```
 
-**3. Run the unit tests** (all 60 tests must pass):
+**2. Run the unit tests** (all 60 tests must pass):
 
 ```bash
 cd app
 xvfb-run -a ./build/bin/LadderClimber_test
 ```
 
-**4. Run the game** headless for 10 seconds as a smoke test (an exit code of
+**3. Run the game** headless for 10 seconds as a smoke test (an exit code of
 `124` is expected — the timeout killed it, i.e. it started and rendered fine):
 
 ```bash
