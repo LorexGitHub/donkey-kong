@@ -19,7 +19,6 @@ GameController::GameController(GameView& view, GameState& state, Player& player,
       title_fn(std::move(on_title)) {}
 
 void GameController::handle_input(float dt) {
-    pause_cd -= dt;
     while (auto ev = view.window.pollEvent()) {
         if (ev->is<sf::Event::Closed>()) {
             state.save_records();
@@ -32,139 +31,60 @@ void GameController::handle_input(float dt) {
         }
 
         if (auto* mb = ev->getIf<sf::Event::MouseButtonPressed>()) {
-            sf::Vector2f wp = view.window.mapPixelToCoords(mb->position);
-
-            // Mute always available
-            if (view.get_mute_btn_bounds().contains(wp)) {
-                state.muted = !state.muted;
-                music.setVolume(state.muted ? 0.f : 15.f);
-            }
-
-            // ── TITLE SCREEN ──
-            if (state.phase == GameState::Phase::Title) {
-                if (GameView::title_btn_easy().contains(wp))
-                    state.difficulty = GameState::Difficulty::Easy;
-                else if (GameView::title_btn_normal().contains(wp))
-                    state.difficulty = GameState::Difficulty::Normal;
-                else if (GameView::title_btn_hard().contains(wp))
-                    state.difficulty = GameState::Difficulty::Hard;
-                else if (GameView::title_btn_custom().contains(wp)) {
-                    state.difficulty = GameState::Difficulty::Custom;
-                    state.phase = GameState::Phase::Custom;
-                } else if (GameView::title_btn_play().contains(wp)) {
-                    state.overall_timer = 0;
-                    state.lives = 3;
-                    state.last_pickup_stage = 0;
-                    title_fn();
-                    start_game_fn();
-                }
-            }
-
-            // ── CUSTOM DIFFICULTY SCREEN ──
-            if (state.phase == GameState::Phase::Custom) {
-                auto clamp = [](float v, float lo, float hi) { return std::max(lo, std::min(hi, v)); };
-
-                if (GameView::custom_speed_track().contains(wp)) {
-                    float t = (wp.x - 250.f) / 300.f;
-                    state.custom_speed = clamp(60.f + t * (400.f - 60.f), 60.f, 400.f);
-                } else if (GameView::custom_interval_track().contains(wp)) {
-                    float t = (wp.x - 250.f) / 300.f;
-                    state.custom_interval = clamp(0.5f + t * (5.f - 0.5f), 0.5f, 5.f);
-                } else if (GameView::custom_pillar_speed_track().contains(wp)) {
-                    float t = (wp.x - 250.f) / 300.f;
-                    state.custom_pillar_speed = clamp(50.f + t * (250.f - 50.f), 50.f, 250.f);
-                } else if (GameView::custom_fire_rate_track().contains(wp)) {
-                    float t = (wp.x - 250.f) / 300.f;
-                    state.custom_fire_interval = clamp(0.5f + t * (5.f - 0.5f), 0.5f, 5.f);
-                } else if (GameView::custom_fire_speed_track().contains(wp)) {
-                    float t = (wp.x - 250.f) / 300.f;
-                    state.custom_fireball_speed = clamp(120.f + t * (450.f - 120.f), 120.f, 450.f);
-                } else if (GameView::custom_btn_play().contains(wp)) {
-                    state.overall_timer = 0;
-                    state.lives = 3;
-                    title_fn();
-                    start_game_fn();
-                }
-            }
-
-            // ── PAUSED ──
-            if (state.phase == GameState::Phase::Playing && state.paused) {
-                if (view.get_pause_resume_btn_bounds().contains(wp)) {
-                    state.paused = false;
-                }
-                if (view.get_pause_reset_btn_bounds().contains(wp)) {
-                    state.paused = false;
-                    state.overall_timer = 0;
-                    state.lives = 3;
-                    title_fn();
-                }
-            }
-
-            // ── GAME OVER ──
-            if (state.phase == GameState::Phase::GameOver) {
-                if (view.get_menu_btn_bounds().contains(wp)) {
-                    state.overall_timer = 0;
-                    state.lives = 3;
-                    play_music_fn();
-                    title_fn();
-                }
-            }
-
-            // ── STAGE COMPLETE / WON ──
-            if (state.phase == GameState::Phase::Won) {
-                if (state.crowns >= 9) {
-                    // Play Again = menu_btn
-                    if (view.get_menu_btn_bounds().contains(wp)) {
-                        state.overall_timer = 0;
-                        state.lives = 3;
-                        title_fn();
-                        start_game_fn();
-                    }
-                } else {
-                    // Next Stage = menu_btn (keeps overall_timer, crowns already incremented)
-                    if (view.get_menu_btn_bounds().contains(wp)) {
-                        state.lives = 3;
-                        start_game_fn();
-                    }
-                }
-                // MENU = pause_reset_btn
-                if (view.get_pause_reset_btn_bounds().contains(wp)) {
-                    state.overall_timer = 0;
-                    state.lives = 3;
-                    title_fn();
-                }
-            }
+            handle_mouse_click(view.window.mapPixelToCoords(mb->position));
         }
     }
+
+    handle_keys(dt,
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W),
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S),
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A),
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D),
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W),
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P),
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::U),
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::I));
+}
+
+void GameController::handle_keys(float dt,
+                                 bool key_up, bool key_down,
+                                 bool key_left, bool key_right,
+                                 bool key_jump, bool key_pause,
+                                 bool key_prev_stage, bool key_next_stage) {
+    pause_cd -= dt;
 
     // Stage-skip consideration: on the WON screen, Space advances to the next stage.
-    {
-        bool space_down = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
-        if (state.phase == GameState::Phase::Won && space_down && !jump_key_held) {
-            if (state.crowns >= 9) {
-                state.overall_timer = 0;
-                state.lives = 3;
-                title_fn();
-                start_game_fn();
-            } else {
-                state.lives = 3;
-                start_game_fn();
-            }
-            jump_key_held = true;
+    if (state.phase == GameState::Phase::Won && key_jump && !jump_key_held) {
+        if (state.crowns >= 9) {
+            state.overall_timer = 0;
+            state.lives = 3;
+            title_fn();
+            start_game_fn();
+        } else {
+            state.lives = 3;
+            start_game_fn();
         }
-        if (!space_down)
-            jump_key_held = false;
+        jump_key_held = true;
     }
+    if (!key_jump)
+        jump_key_held = false;
 
     // Stage skip keys (U = back, I = forward)
     state.skip_cd -= dt;
     if (state.skip_cd <= 0) {
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::U)) {
+        if (key_prev_stage) {
             if (state.crowns > 0) state.crowns--;
             start_game_fn();
             state.skip_cd = 0.3f;
         }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::I)) {
+        if (key_next_stage) {
             if (state.crowns < 8) state.crowns++;
             start_game_fn();
             state.skip_cd = 0.3f;
@@ -172,9 +92,7 @@ void GameController::handle_input(float dt) {
     }
 
     if (state.phase == GameState::Phase::Playing) {
-        if (pause_cd <= 0 &&
-            (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape) ||
-             sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P))) {
+        if (pause_cd <= 0 && key_pause) {
             state.paused = !state.paused;
             pause_cd = 1.f;
         }
@@ -189,17 +107,13 @@ void GameController::handle_input(float dt) {
         }
 
         if (on_ladder) {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) ||
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
+            if (key_up)
                 player.climb(-180.f);
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) ||
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
+            else if (key_down)
                 player.climb(180.f);
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) ||
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+            else if (key_left)
                 player.move_left();
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) ||
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
+            else if (key_right)
                 player.move_right();
             else if (player.is_climbing())
                 player.stop_on_ladder();
@@ -208,21 +122,119 @@ void GameController::handle_input(float dt) {
         } else {
             if (player.is_climbing())
                 player.set_climbing(false);
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) ||
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+            if (key_left)
                 player.move_left();
-            else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) ||
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
+            else if (key_right)
                 player.move_right();
             else
                 player.stop_horizontal();
         }
 
-        bool jump_down = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) ||
-                         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W) ||
-                         sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up);
-        if (jump_down && !jump_key_held)
+        if (key_jump && !jump_key_held)
             player.jump();
-        jump_key_held = jump_down;
+        jump_key_held = key_jump;
+    }
+}
+
+void GameController::handle_mouse_click(sf::Vector2f wp) {
+    // Mute always available
+    if (view.get_mute_btn_bounds().contains(wp)) {
+        state.muted = !state.muted;
+        music.setVolume(state.muted ? 0.f : 15.f);
+    }
+
+    // ── TITLE SCREEN ──
+    if (state.phase == GameState::Phase::Title) {
+        if (GameView::title_btn_easy().contains(wp))
+            state.difficulty = GameState::Difficulty::Easy;
+        else if (GameView::title_btn_normal().contains(wp))
+            state.difficulty = GameState::Difficulty::Normal;
+        else if (GameView::title_btn_hard().contains(wp))
+            state.difficulty = GameState::Difficulty::Hard;
+        else if (GameView::title_btn_custom().contains(wp)) {
+            state.difficulty = GameState::Difficulty::Custom;
+            state.phase = GameState::Phase::Custom;
+        } else if (GameView::title_btn_play().contains(wp)) {
+            state.overall_timer = 0;
+            state.lives = 3;
+            state.last_pickup_stage = 0;
+            title_fn();
+            start_game_fn();
+        }
+    }
+
+    // ── CUSTOM DIFFICULTY SCREEN ──
+    if (state.phase == GameState::Phase::Custom) {
+        auto clamp = [](float v, float lo, float hi) { return std::max(lo, std::min(hi, v)); };
+
+        if (GameView::custom_speed_track().contains(wp)) {
+            float t = (wp.x - 250.f) / 300.f;
+            state.custom_speed = clamp(60.f + t * (400.f - 60.f), 60.f, 400.f);
+        } else if (GameView::custom_interval_track().contains(wp)) {
+            float t = (wp.x - 250.f) / 300.f;
+            state.custom_interval = clamp(0.5f + t * (5.f - 0.5f), 0.5f, 5.f);
+        } else if (GameView::custom_pillar_speed_track().contains(wp)) {
+            float t = (wp.x - 250.f) / 300.f;
+            state.custom_pillar_speed = clamp(50.f + t * (250.f - 50.f), 50.f, 250.f);
+        } else if (GameView::custom_fire_rate_track().contains(wp)) {
+            float t = (wp.x - 250.f) / 300.f;
+            state.custom_fire_interval = clamp(0.5f + t * (5.f - 0.5f), 0.5f, 5.f);
+        } else if (GameView::custom_fire_speed_track().contains(wp)) {
+            float t = (wp.x - 250.f) / 300.f;
+            state.custom_fireball_speed = clamp(120.f + t * (450.f - 120.f), 120.f, 450.f);
+        } else if (GameView::custom_btn_play().contains(wp)) {
+            state.overall_timer = 0;
+            state.lives = 3;
+            title_fn();
+            start_game_fn();
+        }
+    }
+
+    // ── PAUSED ──
+    if (state.phase == GameState::Phase::Playing && state.paused) {
+        if (view.get_pause_resume_btn_bounds().contains(wp)) {
+            state.paused = false;
+        }
+        if (view.get_pause_reset_btn_bounds().contains(wp)) {
+            state.paused = false;
+            state.overall_timer = 0;
+            state.lives = 3;
+            title_fn();
+        }
+    }
+
+    // ── GAME OVER ──
+    if (state.phase == GameState::Phase::GameOver) {
+        if (view.get_menu_btn_bounds().contains(wp)) {
+            state.overall_timer = 0;
+            state.lives = 3;
+            play_music_fn();
+            title_fn();
+        }
+    }
+
+    // ── STAGE COMPLETE / WON ──
+    if (state.phase == GameState::Phase::Won) {
+        if (state.crowns >= 9) {
+            // Play Again = menu_btn
+            if (view.get_menu_btn_bounds().contains(wp)) {
+                state.overall_timer = 0;
+                state.lives = 3;
+                title_fn();
+                start_game_fn();
+            }
+        } else {
+            // Next Stage = menu_btn (keeps overall_timer, crowns already incremented)
+            if (view.get_menu_btn_bounds().contains(wp)) {
+                state.lives = 3;
+                start_game_fn();
+            }
+        }
+        // MENU = pause_reset_btn
+        if (view.get_pause_reset_btn_bounds().contains(wp)) {
+            state.overall_timer = 0;
+            state.lives = 3;
+            title_fn();
+        }
     }
 }

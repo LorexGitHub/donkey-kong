@@ -44,16 +44,22 @@ add_executable(LadderClimber_test
     src/model/PowerUp.cpp
     src/model/Platform.cpp
     src/model/Boss.cpp
+    src/model/PillarEnemy.cpp
+    src/model/HeartPickup.cpp
+    src/view/GameView.cpp
+    src/control/GameController.cpp
     test/GameStateTest.cpp
     test/PlayerTest.cpp
     test/BarrelTest.cpp
     test/PowerUpTest.cpp
     test/PlatformTest.cpp
     test/BossTest.cpp
+    test/GameControllerTest.cpp
+    test/GameViewTest.cpp
 )
 target_include_directories(LadderClimber_test PRIVATE src)
 target_compile_features(LadderClimber_test PRIVATE cxx_std_20)
-target_link_libraries(LadderClimber_test PRIVATE gtest_main SFML::Graphics)
+target_link_libraries(LadderClimber_test PRIVATE gtest_main SFML::Graphics SFML::Audio)
 
 # Sprite generator
 add_executable(gen_sprites tools/gen_sprites.cpp)
