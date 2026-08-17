@@ -36,16 +36,18 @@ public:
 
     TimeRecord records;
 
+    /// Pick the value matching the current difficulty (custom → slider value).
     float diff_value(float easy, float normal, float hard, float custom) const;
+    // -- Difficulty-dependent tuning, used by the controller to spawn threats --
     float get_barrel_speed() const;
     float get_barrel_interval() const;
     float get_pillar_speed() const;
     float get_fire_interval() const;
     float get_fireball_speed() const;
 
-    void save_records(const char* path = "assets/times.dat");
-    void load_records(const char* path = "assets/times.dat");
-    static std::string fmt_time(float t);
+    void save_records(const char* path = "assets/times.dat"); ///< Persist best times.
+    void load_records(const char* path = "assets/times.dat"); ///< Restore best times.
+    static std::string fmt_time(float t);  ///< Seconds → "MM:SS.hh" (negative → "NONE").
 };
 
 #endif

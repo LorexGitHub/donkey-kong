@@ -11,13 +11,14 @@ public:
         : pos(x, y), anim_rate(anim_rate) {}
     virtual ~Pickup() = default;
 
+    /// Advance the shared animation clock while the item is active.
     void update(float dt) { if (active) anim_timer += dt * anim_rate; }
     virtual void draw(sf::RenderWindow& win) const = 0;
     virtual sf::FloatRect get_bounds() const = 0;
 
     sf::Vector2f get_pos() const { return pos; }
     bool is_active() const { return active; }
-    void collect() { active = false; }
+    void collect() { active = false; }  ///< Called once the player overlaps the item.
 
 protected:
     sf::Vector2f pos;

@@ -15,10 +15,14 @@ class Pickup;
 class PillarEnemy;
 class GameState;
 
+/// The view: renders the current model state to the SFML window and provides
+/// the clickable UI (title screen, pause menu, mute button, sliders).
+/// It only reads model data (via getters) and never modifies the game.
 class GameView {
 public:
     GameView();
 
+    /// Draw one complete frame from the given model objects.
     void draw(const GameState& state, const Player& player,
               const std::vector<Platform>& platforms,
               const std::vector<Ladder>& ladders,
@@ -29,18 +33,21 @@ public:
               const PillarEnemy* left_pillar,
               const PillarEnemy* right_pillar);
 
-    sf::FloatRect get_menu_btn_bounds() const;
+    // -- UI hit areas (the controller maps clicks onto these) --
+    sf::FloatRect get_menu_btn_bounds() const;       ///< In-game "menu" button.
     sf::FloatRect get_pause_resume_btn_bounds() const;
     sf::FloatRect get_pause_reset_btn_bounds() const;
     sf::FloatRect get_mute_btn_bounds() const;
-    void update_view();
+    void update_view();                              ///< Recompute layout after resize.
 
+    // Title-screen buttons (static so tests can check them without a window).
     static sf::FloatRect title_btn_easy();
     static sf::FloatRect title_btn_normal();
     static sf::FloatRect title_btn_hard();
     static sf::FloatRect title_btn_custom();
     static sf::FloatRect title_btn_play();
 
+    // Custom-difficulty slider tracks.
     static sf::FloatRect custom_speed_track();
     static sf::FloatRect custom_interval_track();
     static sf::FloatRect custom_pillar_speed_track();
@@ -54,6 +61,7 @@ private:
     sf::Font font;
     sf::View game_view;
 
+    // -- HUD texts --
     sf::Text title_text{font};
     sf::Text status_text{font};
     sf::Text crowns_text{font};
@@ -62,6 +70,7 @@ private:
     sf::Text overall_rec_text{font};
     sf::Text stage_rec_text{font};
 
+    // -- UI buttons --
     sf::RectangleShape menu_btn;
     sf::Text menu_btn_text{font};
     sf::RectangleShape pause_resume_btn;
@@ -72,9 +81,11 @@ private:
     sf::RectangleShape mute_btn;
     sf::Text mute_text{font};
 
+    // -- World decoration --
     sf::RectangleShape princess;
     sf::Texture princess_tex;
 
+    // -- Textures (rect-shape fallbacks are used when files are missing) --
     sf::Texture bg_tex;
     sf::Texture plat_tex;
     sf::Texture ladder_tex;
@@ -82,6 +93,7 @@ private:
     sf::Texture boss_tex;
     sf::RectangleShape bg_shape{{800, 750}};
 
+    // -- Helpers --
     sf::FloatRect draw_btn(sf::FloatRect rect, const std::string& label, const sf::Color& color);
     float draw_slider(float cx, float cy, float min_val, float max_val, float val);
 

@@ -1,6 +1,7 @@
 #include "PowerUp.hpp"
 #include <cmath>
 
+// A spinning four-pointed star with a soft cyan glow, pulsing over time.
 void PowerUp::draw(sf::RenderWindow& win) const {
     if (!is_active()) return;
     float pulse = 1.f + std::sin(anim_timer) * 0.2f;
@@ -17,6 +18,7 @@ void PowerUp::draw(sf::RenderWindow& win) const {
     win.draw(star);
 }
 
+// Slightly larger than the visual star so it is easy to pick up.
 sf::FloatRect PowerUp::get_bounds() const {
     float s = SIZE * 1.5f;
     return {{pos.x + 12.f - s, pos.y - 7.f - s}, {s * 2, s * 2}};

@@ -9,13 +9,12 @@ class Boss {
 public:
     Boss(float x, float y, int stage);
 
-    void draw(sf::RenderWindow& win) const;
-
+    void draw(sf::RenderWindow& win) const;  ///< Sprite (or shape fallback).
     sf::FloatRect get_bounds() const;
     const sf::RectangleShape& get_shape() const { return shape; }
 
 private:
-    void load_texture();
+    void load_texture();  ///< Pick the sprite for the current stage.
 
     sf::RectangleShape shape{sf::Vector2f{48, 56}};
     sf::Texture texture;

@@ -15,12 +15,14 @@ installation).
 ### Option A — Local build
 
 **Linux / WSL:**
-
+Install
 ```bash
 sudo apt install build-essential cmake libx11-dev libxrandr-dev libxcursor-dev \
   libxi-dev libgl1-mesa-dev libglu1-mesa-dev libudev-dev libfreetype-dev \
   libvorbis-dev libogg-dev libflac-dev
-
+```
+Build & Run
+```bash
 cd app
 cmake -S . -B build
 cmake --build build -j4
@@ -72,15 +74,11 @@ docker run --rm ladder-climber /bin/bash -c "cd /project/app && xvfb-run ./build
 
 ### Option C — JupyterHub (Uni Münster)
 
-Build, run the tests and smoke-run the game headlessly (Xvfb) on the course
-JupyterHub. No root needed — it uses the prebuilt SFML 3.0 from the course
-template. Music is skipped automatically if the hub lacks the audio libraries.
-
 ```bash
 ./jupyterhub/run.sh
 ```
 
-Run manually from a JupyterLab terminal if you prefer:
+Run manually from a JupyterLab terminal:
 
 ```bash
 cd app
@@ -111,6 +109,8 @@ Controls:
 | Esc / P       | Pause                                 |
 | M             | Toggle mute                           |
 | U / I         | Skip to previous / next stage (debug) |
+
+The background music tracks are AI-generated.
 
 ## Architecture (MVC)
 

@@ -8,6 +8,8 @@ Barrel::Barrel(float x, float y, float vx, int lvl) : pos{x, y}, vel{vx, 0}, lev
     [[maybe_unused]] bool loaded = texture.loadFromFile("assets/sprites/barrel.png");
 }
 
+// Rolling obstacle physics: constant horizontal velocity from the spawn plus
+// gravity. Dies when it falls past the stage, the lava line or an edge.
 void Barrel::update(float dt) {
     vel.y += 600.f * dt;
     pos += vel * dt;
@@ -24,6 +26,7 @@ sf::FloatRect Barrel::get_bounds() const {
 
 void Barrel::draw(sf::RenderWindow& win) const {
     if (texture.getSize().x > 0) {
+        // Rotating sprite makes the rolling motion visible.
         sf::Sprite spr(texture);
         spr.setOrigin({12, 12});
         spr.setPosition(pos);

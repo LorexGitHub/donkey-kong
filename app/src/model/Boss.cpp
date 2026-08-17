@@ -8,6 +8,9 @@ Boss::Boss(float x, float y, int stage) : monster_stage(stage) {
     load_texture();
 }
 
+// Load the sprite for this stage: stages 1-8 have their own boss image,
+// anything else falls back to the generic one. The shape is the fallback
+// used when no texture file is present.
 void Boss::load_texture() {
     char path[64];
     if (monster_stage < 9)
