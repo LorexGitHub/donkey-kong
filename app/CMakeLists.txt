@@ -6,8 +6,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Use a preinstalled SFML 3 if one is provided (e.g. the course template on the
 # JupyterHub), otherwise download and build it from source.
 include(FetchContent)
-find_package(SFML 3 QUIET CONFIG)
-if(NOT SFML_FOUND)
+find_package(SFML 3 QUIET CONFIG COMPONENTS Graphics Audio)
+if(NOT SFML_FOUND OR NOT SFML_Graphics_FOUND OR NOT SFML_Audio_FOUND)
     FetchContent_Declare(SFML
         GIT_REPOSITORY https://github.com/SFML/SFML.git
         GIT_TAG 3.0.0
