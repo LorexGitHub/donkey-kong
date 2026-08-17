@@ -89,6 +89,61 @@ cmake --build . -j4
 LD_LIBRARY_PATH=bin ./bin/LadderClimber_test
 ```
 
+## JupyterHub (Uni Münster)
+
+The project builds and runs on the university JupyterHub. Because a JupyterHub
+session has no physical display, SFML runs headlessly against **Xvfb** (a
+virtual X server); the game renders and plays normally inside it.
+
+Run everything (dependencies → build → tests → headless smoke run) with:
+
+```bash
+./jupyterhub/run.sh
+```
+
+### Step by step (open a Terminal in JupyterLab)
+
+**1. Install dependencies** (once per session):
+
+```bash
+sudo apt-get update && sudo apt-get install -y \
+    build-essential cmake git \
+    libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
+    libgl1-mesa-dev libglu1-mesa-dev libudev-dev \
+    libfreetype-dev libvorbis-dev libogg-dev libflac-dev \
+    xvfb fonts-dejavu-core
+```
+
+**2. Build** — CMake downloads SFML 3.0 and GoogleTest on the first run
+(network access is required):
+
+```bash
+cd app
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j4
+```
+
+**3. Run the unit tests** (all 60 tests must pass):
+
+```bash
+cd app
+xvfb-run -a ./build/bin/LadderClimber_test
+```
+
+**4. Run the game** headless for 10 seconds as a smoke test (an exit code of
+`124` is expected — the timeout killed it, i.e. it started and rendered fine):
+
+```bash
+cd app
+timeout 10 xvfb-run -a -s "-screen 0 1024x768x24" ./build/bin/LadderClimber
+```
+
+### Verification on the JupyterHub
+
+This exact sequence (`./jupyterhub/run.sh`) must complete with
+`All JupyterHub checks passed`. It is the same command the course staff can use
+to confirm the game builds and runs on the hub.
+
 ## File structure
 
 ```
@@ -124,6 +179,8 @@ ladder-climber/
 │       ├── sprites/    # generated .png files
 │       ├── music/      # .mp3 files
 │       └── fonts/      # arial.ttf (copied from system)
+├── jupyterhub/
+│   └── run.sh          # deps + build + tests + headless smoke run
 └── README.md
 ```
 
