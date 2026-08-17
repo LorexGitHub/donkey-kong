@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # JupyterHub), otherwise download and build it from source.
 include(FetchContent)
 find_package(SFML 3 QUIET CONFIG COMPONENTS Graphics Audio)
-if(NOT SFML_FOUND OR NOT SFML_Graphics_FOUND OR NOT SFML_Audio_FOUND)
+if(NOT TARGET SFML::Graphics OR NOT TARGET SFML::Audio)
     FetchContent_Declare(SFML
         GIT_REPOSITORY https://github.com/SFML/SFML.git
         GIT_TAG 3.0.0
