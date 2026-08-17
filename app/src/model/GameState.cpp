@@ -25,52 +25,18 @@ void GameState::save_records(const char* path) {
     f << records.overall_time;
 }
 
-float GameState::get_barrel_speed() const {
+float GameState::diff_value(float easy, float normal, float hard, float custom) const {
     switch (difficulty) {
-        case Difficulty::Easy:   return 120.f;
-        case Difficulty::Normal: return 180.f;
-        case Difficulty::Hard:   return 260.f;
-        case Difficulty::Custom: return custom_speed;
+        case Difficulty::Easy:   return easy;
+        case Difficulty::Normal: return normal;
+        case Difficulty::Hard:   return hard;
+        case Difficulty::Custom: return custom;
     }
-    return 180.f;
+    return normal;
 }
 
-float GameState::get_barrel_interval() const {
-    switch (difficulty) {
-        case Difficulty::Easy:   return 3.0f;
-        case Difficulty::Normal: return 2.0f;
-        case Difficulty::Hard:   return 1.2f;
-        case Difficulty::Custom: return custom_interval;
-    }
-    return 2.0f;
-}
-
-float GameState::get_pillar_speed() const {
-    switch (difficulty) {
-        case Difficulty::Easy:   return 60.f;
-        case Difficulty::Normal: return 100.f;
-        case Difficulty::Hard:   return 150.f;
-        case Difficulty::Custom: return custom_pillar_speed;
-    }
-    return 100.f;
-}
-
-float GameState::get_fire_interval() const {
-    switch (difficulty) {
-        case Difficulty::Easy:   return 3.5f;
-        case Difficulty::Normal: return 2.5f;
-        case Difficulty::Hard:   return 1.3f;
-        case Difficulty::Custom: return custom_fire_interval;
-    }
-    return 2.5f;
-}
-
-float GameState::get_fireball_speed() const {
-    switch (difficulty) {
-        case Difficulty::Easy:   return 150.f;
-        case Difficulty::Normal: return 250.f;
-        case Difficulty::Hard:   return 360.f;
-        case Difficulty::Custom: return custom_fireball_speed;
-    }
-    return 250.f;
-}
+float GameState::get_barrel_speed()    const { return diff_value(120.f, 180.f, 260.f, custom_speed); }
+float GameState::get_barrel_interval() const { return diff_value(3.0f, 2.0f, 1.2f, custom_interval); }
+float GameState::get_pillar_speed()    const { return diff_value(60.f, 100.f, 150.f, custom_pillar_speed); }
+float GameState::get_fire_interval()   const { return diff_value(3.5f, 2.5f, 1.3f, custom_fire_interval); }
+float GameState::get_fireball_speed()  const { return diff_value(150.f, 250.f, 360.f, custom_fireball_speed); }

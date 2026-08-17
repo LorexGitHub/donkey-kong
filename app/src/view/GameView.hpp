@@ -57,7 +57,6 @@ private:
     sf::Text title_text{font};
     sf::Text status_text{font};
     sf::Text crowns_text{font};
-    sf::Text stage_text{font};
     sf::Text time_text{font};
     sf::Text record_text{font};
     sf::Text overall_rec_text{font};

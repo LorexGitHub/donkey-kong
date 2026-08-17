@@ -32,11 +32,18 @@ void Game::go_to_title() {
 
 void Game::play_random_music() {
     music.stop();
+    static const char* tracks[] = {
+        "assets/music/track1.mp3",  "assets/music/track2.mp3",
+        "assets/music/track3.mp3",  "assets/music/track4.mp3",
+        "assets/music/track5.mp3",  "assets/music/track6.mp3",
+        "assets/music/track7.mp3",  "assets/music/track8.mp3",
+        "assets/music/track9.mp3",  "assets/music/track10.mp3",
+        "assets/music/track11.mp3", "assets/music/track12.mp3",
+    };
     std::vector<std::string> songs;
-    for (int i = 1; i <= 999; i++) {
-        std::string p = "assets/music/track" + std::to_string(i) + ".mp3";
+    for (const char* p : tracks) {
         std::ifstream f(p);
-        if (f.is_open()) { songs.push_back(p); f.close(); }
+        if (f.is_open()) songs.push_back(p);
     }
     if (!songs.empty()) {
         int idx = std::rand() % songs.size();
@@ -299,17 +306,7 @@ void Game::update(float dt) {
 
     // Lava kills
     if (player.get_pos().y > 710 && state.phase == GameState::Phase::Playing) {
-        state.lives--;
-        if (state.lives <= 0) {
-            state.phase = GameState::Phase::GameOver;
-            player.set_dead(true);
-            state.crowns = 0;
-            play_random_music();
-        } else {
-            auto ppos = player.get_pos();
-            place_god_powerup(ppos.x, ppos.y);
-            start_game();
-        }
+        lose_life();
     }
 
     // Win: player reached top platform near princess
@@ -341,17 +338,7 @@ void Game::check_collisions() {
             sf::FloatRect fb_bounds{{fb.pos.x - 5.f, fb.pos.y - 5.f}, {10.f, 10.f}};
             if (player.get_bounds().findIntersection(fb_bounds).has_value()) {
                 fb.alive = false;
-                state.lives--;
-                if (state.lives <= 0) {
-                    state.phase = GameState::Phase::GameOver;
-                    player.set_dead(true);
-                    state.crowns = 0;
-                    play_random_music();
-                } else {
-                    auto ppos = player.get_pos();
-                    powerup = std::make_unique<PowerUp>(ppos.x, ppos.y);
-                    start_game();
-                }
+                lose_life();
                 return;
             }
         }
@@ -359,19 +346,25 @@ void Game::check_collisions() {
 
     for (auto& b : barrels) {
         if (player.get_bounds().findIntersection(b->get_bounds()).has_value()) {
-            state.lives--;
-            if (state.lives <= 0) {
-                state.phase = GameState::Phase::GameOver;
-                player.set_dead(true);
-                state.crowns = 0;
-                play_random_music();
-            } else {
-                auto ppos = player.get_pos();
-                powerup = std::make_unique<PowerUp>(ppos.x, ppos.y);
-                start_game();
-            }
+            lose_life();
             return;
         }
+    }
+}
+
+// Lose one life; on the last one the run ends, otherwise the stage restarts
+// with a mercy power-up placed near the player.
+void Game::lose_life() {
+    state.lives--;
+    if (state.lives <= 0) {
+        state.phase = GameState::Phase::GameOver;
+        player.set_dead(true);
+        state.crowns = 0;
+        play_random_music();
+    } else {
+        auto ppos = player.get_pos();
+        place_god_powerup(ppos.x);
+        start_game();
     }
 }
 
@@ -383,7 +376,7 @@ void Game::spawn_barrel() {
 
 // Place the god-mode pickup just above whichever platform spans this x-position.
 // Falls back to the bottom (spawn) platform so it is always reachable.
-void Game::place_god_powerup(float px, float py) {
+void Game::place_god_powerup(float px) {
     float top_y = platforms.empty() ? 710.f : platforms.back().get_bounds().position.y;
     for (auto& p : platforms) {
         auto pb = p.get_bounds();
@@ -393,7 +386,6 @@ void Game::place_god_powerup(float px, float py) {
         }
     }
     powerup = std::make_unique<PowerUp>(px - 12.f, top_y - 14.f);
-    (void)py;
 }
 
 void Game::spawn_pickups() {
@@ -404,7 +396,7 @@ void Game::spawn_pickups() {
     if (state.stage == 1) {
         auto spawn_pb = platforms.back().get_bounds();
         float center_x = spawn_pb.position.x + spawn_pb.size.x / 2.f;
-        place_god_powerup(center_x, spawn_pb.position.y);
+        place_god_powerup(center_x);
     }
 
     // Heart pickup - one per stage, on a different platform

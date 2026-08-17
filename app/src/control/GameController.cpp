@@ -35,18 +35,16 @@ void GameController::handle_input(float dt) {
         }
     }
 
-    handle_keys(dt,
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) ||
-                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W),
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) ||
-                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S),
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) ||
-                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A),
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) ||
-                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D),
-                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) ||
-                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) ||
-                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W),
+    bool key_up   = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W);
+    bool key_down = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S);
+    bool key_left = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) ||
+                    sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A);
+    bool key_right = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) ||
+                     sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D);
+    handle_keys(dt, key_up, key_down, key_left, key_right,
+                sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) || key_up,
                 sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Escape) ||
                     sf::Keyboard::isKeyPressed(sf::Keyboard::Key::P),
                 sf::Keyboard::isKeyPressed(sf::Keyboard::Key::U),

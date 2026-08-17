@@ -36,6 +36,7 @@ public:
 
     TimeRecord records;
 
+    float diff_value(float easy, float normal, float hard, float custom) const;
     float get_barrel_speed() const;
     float get_barrel_interval() const;
     float get_pillar_speed() const;

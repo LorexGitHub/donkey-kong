@@ -70,12 +70,14 @@ TEST(GameViewTest, MuteButtonLocatedInCorner) {
     EXPECT_LT(m.position.y, 40.f);
 }
 
-// ── Rendering smoke test ──
+// ── Rendering smoke tests ──
 
-TEST(GameViewTest, DrawPlayingSceneRenders) {
+namespace {
+void draw_scene(GameState::Phase phase, int crowns) {
     GameState state;
-    state.phase = GameState::Phase::Playing;
+    state.phase = phase;
     state.stage = 1;
+    state.crowns = crowns;
     state.lives = 3;
 
     Player player;
@@ -98,22 +100,12 @@ TEST(GameViewTest, DrawPlayingSceneRenders) {
     EXPECT_NO_THROW(g_view.draw(state, player, platforms, ladders, barrels, dk,
                                 0.f, nullptr, nullptr, &left, &right));
 }
+} // namespace
+
+TEST(GameViewTest, DrawPlayingSceneRenders) {
+    draw_scene(GameState::Phase::Playing, 0);
+}
 
 TEST(GameViewTest, DrawWonScreenRenders) {
-    GameState state;
-    state.phase = GameState::Phase::Won;
-    state.stage = 1;
-    state.crowns = 1;
-
-    Player player;
-    std::vector<Platform> platforms;
-    platforms.emplace_back(50.f, 140.f, 700.f);
-    std::vector<Ladder> ladders;
-    std::vector<std::unique_ptr<Barrel>> barrels;
-    Boss dk(60.f, 140.f, 1);
-    PillarEnemy left(35.f, 140.f, 710.f, 1);
-    PillarEnemy right(765.f, 140.f, 710.f, -1);
-
-    EXPECT_NO_THROW(g_view.draw(state, player, platforms, ladders, barrels, dk,
-                                0.f, nullptr, nullptr, &left, &right));
+    draw_scene(GameState::Phase::Won, 1);
 }

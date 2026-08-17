@@ -93,9 +93,6 @@ GameView::GameView() {
     crowns_text.setCharacterSize(24);
     crowns_text.setFillColor(sf::Color::Yellow);
 
-    stage_text.setCharacterSize(18);
-    stage_text.setFillColor(sf::Color{180, 180, 200});
-
     mute_btn.setSize({22, 22});
     mute_btn.setFillColor(sf::Color{80, 80, 80, 180});
     mute_btn.setPosition({8, 10});
@@ -300,15 +297,7 @@ void GameView::draw(const GameState& state, const Player& player,
 
         // ── BOSS section (barrel conditions) ──
         {
-            if (boss_tex.getSize().x > 0) draw_enemy_header(100, "BOSS", boss_tex);
-            else {
-                sf::Text sec(font, "BOSS", 26);
-                sec.setFillColor(sf::Color{255, 200, 100});
-                auto sb = sec.getLocalBounds();
-                sec.setOrigin({sb.position.x + sb.size.x / 2, sb.position.y + sb.size.y / 2});
-                sec.setPosition({400, 100});
-                window.draw(sec);
-            }
+            draw_enemy_header(100, "BOSS", boss_tex);
 
             sf::Text lbl1(font, "Barrel Speed:", 18);
             lbl1.setFillColor(sf::Color::White);
@@ -536,9 +525,6 @@ void GameView::draw(const GameState& state, const Player& player,
 
     for (auto& b : barrels)
         b->draw(window);
-
-    // HeartPickup
-    if (heart_pickup) heart_pickup->draw(window);
 
     // HeartPickup
     if (heart_pickup) heart_pickup->draw(window);
@@ -885,10 +871,10 @@ void GameView::draw(const GameState& state, const Player& player,
             window.draw(ov_text);
 
         std::string sstr2 = std::to_string(state.stage);
-        stage_text.setString(sstr2);
-        stage_text.setPosition({770, 10});
-        stage_text.setOrigin({stage_text.getLocalBounds().size.x, 0});
-        window.draw(stage_text);
+        crowns_text.setString(sstr2);
+        crowns_text.setPosition({770, 10});
+        crowns_text.setOrigin({crowns_text.getLocalBounds().size.x, 0});
+        window.draw(crowns_text);
 
         float bx[] = {300, 500};
         const char* labels[] = {"NEXT STAGE", "MENU"};

@@ -61,17 +61,7 @@ target_include_directories(LadderClimber_test PRIVATE src)
 target_compile_features(LadderClimber_test PRIVATE cxx_std_20)
 target_link_libraries(LadderClimber_test PRIVATE gtest_main SFML::Graphics SFML::Audio)
 
-# Sprite generator
-add_executable(gen_sprites tools/gen_sprites.cpp)
-target_link_libraries(gen_sprites PRIVATE SFML::Graphics)
-add_custom_target(generate_sprites
-    COMMAND gen_sprites
-    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-    DEPENDS gen_sprites
-)
-add_dependencies(LadderClimber generate_sprites)
-
-# Copy a system font
+# Copy assets into the build tree
 set(FONT_CANDIDATES
     /usr/share/fonts/TTF/DejaVuSans.ttf
     /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf
@@ -88,9 +78,5 @@ endforeach()
 add_custom_target(copy_assets
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_LIST_DIR}/assets
-        ${CMAKE_CURRENT_BINARY_DIR}/assets
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_CURRENT_LIST_DIR}/assets
-        ${CMAKE_CURRENT_BINARY_DIR}/bin/assets)
-add_dependencies(copy_assets generate_sprites)
+        ${CMAKE_CURRENT_BINARY_DIR}/assets)
 add_dependencies(LadderClimber copy_assets)

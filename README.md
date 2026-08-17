@@ -111,15 +111,15 @@ ladder-climber/
 │   │   │   └── GameView.hpp / GameView.cpp
 │   │   ├── control/
 │   │   │   └── GameController.hpp / GameController.cpp
-│   │   └── tools/
-│   │       └── gen_sprites.cpp
 │   ├── test/
 │   │   ├── GameStateTest.cpp
 │   │   ├── PlayerTest.cpp
 │   │   ├── BarrelTest.cpp
 │   │   ├── PowerUpTest.cpp
 │   │   ├── PlatformTest.cpp
-│   │   └── BossTest.cpp
+│   │   ├── BossTest.cpp
+│   │   ├── GameControllerTest.cpp
+│   │   └── GameViewTest.cpp
 │   └── assets/
 │       ├── sprites/    # generated .png files
 │       ├── music/      # .mp3 files

@@ -33,7 +33,8 @@ private:
     void setup_stage();
     void spawn_barrel();
     void spawn_pickups();
-    void place_god_powerup(float px, float py);
+    void place_god_powerup(float px);
+    void lose_life();
     void check_collisions();
     void play_random_music();
 
