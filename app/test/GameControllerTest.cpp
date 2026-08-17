@@ -19,14 +19,19 @@ struct Harness {
     GameState state;
     Player player;
     std::vector<Ladder> ladders;
+#if LC_AUDIO
     sf::Music music;
+#endif
     bool started = false;
     bool to_title = false;
     bool music_played = false;
     GameController controller;
 
     Harness()
-        : controller(g_view, state, player, ladders, music,
+        : controller(g_view, state, player, ladders,
+#if LC_AUDIO
+                     music,
+#endif
                      [this]() { started = true; },
                      [this]() { music_played = true; },
                      [this]() { to_title = true; }) {}

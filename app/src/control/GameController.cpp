@@ -9,11 +9,16 @@
 
 GameController::GameController(GameView& view, GameState& state, Player& player,
                                std::vector<Ladder>& ladders,
+#if LC_AUDIO
                                sf::Music& music,
+#endif
                                std::function<void()> on_start_game,
                                std::function<void()> on_play_music,
                                std::function<void()> on_title)
-    : view(view), state(state), player(player), ladders(ladders), music(music),
+    : view(view), state(state), player(player), ladders(ladders),
+#if LC_AUDIO
+      music(music),
+#endif
       start_game_fn(std::move(on_start_game)),
       play_music_fn(std::move(on_play_music)),
       title_fn(std::move(on_title)) {}
@@ -138,7 +143,9 @@ void GameController::handle_mouse_click(sf::Vector2f wp) {
     // Mute always available
     if (view.get_mute_btn_bounds().contains(wp)) {
         state.muted = !state.muted;
+#if LC_AUDIO
         music.setVolume(state.muted ? 0.f : 15.f);
+#endif
     }
 
     // ── TITLE SCREEN ──

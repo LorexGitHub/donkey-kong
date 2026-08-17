@@ -109,7 +109,9 @@ Run everything (build → tests → headless smoke run) with:
 
 **1. Build** — CMake uses the prebuilt SFML 3.0 from the course template (already
 on the hub; no `sudo` or `lib*-dev` packages needed). Only GoogleTest is
-downloaded on the first run (network access is required):
+downloaded on the first run (network access is required). Background music
+plays when the hub provides the vorbis/FLAC runtime libraries; if it does not,
+the game builds and runs silently without music:
 
 ```bash
 cd app

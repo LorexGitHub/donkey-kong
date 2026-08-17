@@ -15,7 +15,9 @@ class GameController {
 public:
     GameController(GameView& view, GameState& state, Player& player,
                    std::vector<Ladder>& ladders,
+#if LC_AUDIO
                    sf::Music& music,
+#endif
                    std::function<void()> on_start_game,
                    std::function<void()> on_play_music,
                    std::function<void()> on_title);
@@ -41,7 +43,9 @@ private:
     GameState& state;
     Player& player;
     std::vector<Ladder>& ladders;
+#if LC_AUDIO
     sf::Music& music;
+#endif
     std::function<void()> start_game_fn;
     std::function<void()> play_music_fn;
     std::function<void()> title_fn;

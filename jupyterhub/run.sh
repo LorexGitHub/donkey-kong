@@ -33,6 +33,20 @@ if [ -n "$SFML_DIR" ]; then
     echo "==> Using prebuilt SFML at $SFML_DIR"
     CMAKE_ARGS+=(-DCMAKE_PREFIX_PATH="$SFML_DIR")
     export LD_LIBRARY_PATH="$SFML_DIR/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+    # The prebuilt libsfml-audio.so needs vorbis/FLAC resolved explicitly; link
+    # their runtime libs when present, otherwise build without music.
+    audio_deps=""
+    for lib in libvorbis libvorbisfile libFLAC libogg; do
+        p=$(ldconfig -p 2>/dev/null | awk -v L="$lib" '$1 ~ L {print $NF; exit}')
+        [ -n "$p" ] && audio_deps="$audio_deps $p"
+    done
+    if [ -n "$audio_deps" ]; then
+        echo "==> Audio on: linked with$audio_deps"
+        CMAKE_ARGS+=(-DLC_AUDIO_DEPS="$audio_deps")
+    else
+        echo "==> Audio off (no vorbis/FLAC on this hub)"
+    fi
 else
     echo "==> No prebuilt SFML found; building SFML from source"
 fi

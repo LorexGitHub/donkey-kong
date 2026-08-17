@@ -51,7 +51,9 @@ private:
     std::unique_ptr<PillarEnemy> right_pillar;
     float barrel_timer = 0;
     float lava_anim = 0;
+#if LC_AUDIO
     sf::Music music;
+#endif
     GameController controller;
 };
 

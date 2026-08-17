@@ -5,7 +5,10 @@
 #include <ctime>
 
 Game::Game()
-    : controller(view, state, player, ladders, music,
+    : controller(view, state, player, ladders,
+#if LC_AUDIO
+                 music,
+#endif
                  [this]() { start_game(); },
                  [this]() { play_random_music(); },
                  [this]() { go_to_title(); }) {
@@ -31,6 +34,7 @@ void Game::go_to_title() {
 }
 
 void Game::play_random_music() {
+#if LC_AUDIO
     music.stop();
     static const char* tracks[] = {
         "assets/music/track1.mp3",  "assets/music/track2.mp3",
@@ -53,6 +57,7 @@ void Game::play_random_music() {
             music.play();
         }
     }
+#endif
 }
 
 void Game::start_game() {
