@@ -118,7 +118,8 @@ Controls:
 
 The background music tracks are AI-generated.
 
-## Architecture (MVC)
+## Architecture (Model, View, Controller)
+<img width="1563" height="779" alt="Relations" src="https://github.com/user-attachments/assets/4203879e-acc2-4377-a589-bb93aaeb6183" />
 
 - **Model** (`app/src/model/`) — game state and rules: `GameState` (stage, crowns,
   lives, timers, records), `Player`, `Platform`, `Ladder`, `Barrel`, `Boss`,
