@@ -1,26 +1,106 @@
 # Ladder Climber
 
-A C++ Donkey Kong-style platformer remake with 9 stages, 8 unique bosses, procedural level generation, and a music system. Built with SFML 3.0 following the Model-View-Controller pattern.
+A C++ Donkey Kong-style platformer: climb 9 stages, dodge barrels, collect the crown
+and beat your best time. Built with SFML 3.0 following the Model-View-Controller pattern.
 
 ## Demo
 
-
 https://github.com/user-attachments/assets/2963be98-4ee4-4741-a178-9f643afc5b24
 
+## Run
 
+SFML 3.0 and GoogleTest are downloaded and built automatically by CMake (no manual
+installation).
 
-## Gameplay
+### Option A — Local build
 
-- Climb 9 stages by navigating platforms and ladders while dodging barrels
-- Each stage has a unique boss sprite
-- Collect a crown at the top of each stage
-- Stage 1: 2 platforms, Stage 2: 4 platforms, Stage 3+: 6 platforms
-- Holes appear in platforms from Stage 4 onward
-- 3 lives per run — die on a stage to retry; lose all lives for game over
-- Stage complete screen shows time vs record — choose NEXT STAGE or RESET (retry)
-- After 9 crowns, the overall time is compared to your best — choose PLAY AGAIN
+**Linux / WSL:**
 
-## Controls
+```bash
+sudo apt install build-essential cmake libx11-dev libxrandr-dev libxcursor-dev \
+  libxi-dev libgl1-mesa-dev libglu1-mesa-dev libudev-dev libfreetype-dev \
+  libvorbis-dev libogg-dev libflac-dev
+
+cd app
+cmake -S . -B build
+cmake --build build -j4
+./build/bin/LadderClimber
+```
+
+**Windows** (Visual Studio 2022 with the C++ workload, plus CMake):
+
+```powershell
+cd app
+cmake -S . -B build
+cmake --build build --config Release
+.\build\Release\LadderClimber.exe
+```
+
+**Tests:**
+
+```bash
+# Linux
+./build/bin/LadderClimber_test
+# Windows
+.\build\Release\LadderClimber_test.exe
+```
+
+### Option B — Docker
+
+```bash
+docker build -t ladder-climber .
+```
+
+**Linux** (run from an X11 session):
+
+```bash
+docker run --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix --network host ladder-climber
+```
+
+**Windows (WSLg)** — needs Docker Desktop with WSL 2 integration enabled:
+
+```bash
+docker run --rm -e DISPLAY=$DISPLAY -e PULSE_SERVER=unix:/mnt/wslg/PulseServer \
+  -v /tmp/.X11-unix:/tmp/.X11-unix -v /mnt/wslg:/mnt/wslg --network host ladder-climber
+```
+
+**Tests (headless):**
+
+```bash
+docker run --rm ladder-climber /bin/bash -c "cd /project/app && xvfb-run ./build/bin/LadderClimber_test"
+```
+
+### Option C — JupyterHub (Uni Münster)
+
+Build, run the tests and smoke-run the game headlessly (Xvfb) on the course
+JupyterHub. No root needed — it uses the prebuilt SFML 3.0 from the course
+template. Music is skipped automatically if the hub lacks the audio libraries.
+
+```bash
+./jupyterhub/run.sh
+```
+
+Run manually from a JupyterLab terminal if you prefer:
+
+```bash
+cd app
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j4
+xvfb-run ./build/bin/LadderClimber_test          # all tests pass
+timeout 10 xvfb-run ./build/bin/LadderClimber    # exit code 124 = ran fine
+```
+
+The script prints `All JupyterHub checks passed` when everything works.
+
+## How to play
+
+Climb 9 stages: move across the platforms, use the ladders to climb, and dodge the
+barrels rolling down. Reach the crown at the top to finish a stage; collect all 9
+crowns and finish with the best overall time. You have 3 lives — touching a barrel
+or the lava costs one; lose all three and it is game over. A god-mode power-up and
+heart pickups occasionally appear to help.
+
+Controls:
 
 | Key           | Action                                |
 | ------------- | ------------------------------------- |
@@ -34,111 +114,22 @@ https://github.com/user-attachments/assets/2963be98-4ee4-4741-a178-9f643afc5b24
 
 ## Architecture (MVC)
 
-**Model** (`src/model/`)
+- **Model** (`app/src/model/`) — game state and rules: `GameState` (stage, crowns,
+  lives, timers, records), `Player`, `Platform`, `Ladder`, `Barrel`, `Boss`,
+  `PillarEnemy`. `Pickup` is an abstract base class; `PowerUp` and `HeartPickup`
+  inherit from it.
+- **View** (`app/src/view/`) — `GameView` owns the `sf::RenderWindow` and all drawing.
+- **Control** (`app/src/control/`) — `GameController` maps keyboard/mouse input to
+  model actions.
+- **Coordinator** (`app/src/Game.hpp/.cpp`) — owns the Model, View and Controller,
+  runs the game loop and update logic.
 
-- `Player` — position, velocity, jump/climb state, animation
-- `Platform` — segmented platforms with destructible holes; `Ladder` struct
-- `Barrel` — rolling obstacle with platform collision
-- `Boss` — boss character with per-stage sprite
-- `GameState` — stage, crowns, lives, timers, records, phase enum
+## Dependencies
 
-**View** (`src/view/`)
+Pulled in automatically by CMake (FetchContent):
 
-- `GameView` — owns the `sf::RenderWindow`, fonts, textures, and all `draw()` logic
-
-**Control** (`src/control/`)
-
-- `GameController` — processes keyboard/mouse input, modifies model via callbacks
-
-**Coordinator** (`src/Game.hpp/.cpp`)
-
-- `Game` — owns Model objects, View, Controller; runs the game loop and core update logic
-
-## Building
-
-### Prerequisites
-
-- CMake ≥ 3.22
-- C++20 compiler (GCC, Clang, or MSVC)
-- SFML 3.0 + GoogleTest (downloaded automatically by CMake)
-
-### System dependencies (Linux/WSL)
-
-```bash
-sudo apt install build-essential cmake \
-  libx11-dev libxrandr-dev libxcursor-dev libxi-dev \
-  libgl1-mesa-dev libglu1-mesa-dev \
-  libudev-dev libfreetype-dev libvorbis-dev libogg-dev libflac-dev
-```
-
-### Build & run
-
-```bash
-cd app
-mkdir build && cd build
-cmake ..
-cmake --build . -j4
-LD_LIBRARY_PATH=bin ./bin/LadderClimber
-```
-
-### Tests
-
-```bash
-cd app/build
-cmake --build . -j4
-LD_LIBRARY_PATH=bin ./bin/LadderClimber_test
-```
-
-## JupyterHub (Uni Münster)
-
-The project builds and runs on the university JupyterHub. Because a JupyterHub
-session has no physical display, SFML runs headlessly against **Xvfb** (a
-virtual X server); the game renders and plays normally inside it. The hub image
-already ships the C++ toolchain (gcc/g++, CMake), Xvfb and a **prebuilt SFML
-3.0** from the course template (`run.sh` finds it automatically and links
-against it instead of building SFML from source). The fonts, sprites and music
-live inside the repository — so **no root access is needed**.
-
-Run everything (build → tests → headless smoke run) with:
-
-```bash
-./jupyterhub/run.sh
-```
-
-### Step by step (open a Terminal in JupyterLab)
-
-**1. Build** — CMake uses the prebuilt SFML 3.0 from the course template (already
-on the hub; no `sudo` or `lib*-dev` packages needed). Only GoogleTest is
-downloaded on the first run (network access is required). Background music
-plays when the hub provides the vorbis/FLAC runtime libraries; if it does not,
-the game builds and runs silently without music:
-
-```bash
-cd app
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j4
-```
-
-**2. Run the unit tests** (all 60 tests must pass):
-
-```bash
-cd app
-xvfb-run -a ./build/bin/LadderClimber_test
-```
-
-**3. Run the game** headless for 10 seconds as a smoke test (an exit code of
-`124` is expected — the timeout killed it, i.e. it started and rendered fine):
-
-```bash
-cd app
-timeout 10 xvfb-run -a -s "-screen 0 1024x768x24" ./build/bin/LadderClimber
-```
-
-### Verification on the JupyterHub
-
-This exact sequence (`./jupyterhub/run.sh`) must complete with
-`All JupyterHub checks passed`. It is the same command the course staff can use
-to confirm the game builds and runs on the hub.
+- [SFML 3.0](https://github.com/SFML/SFML) — windowing, graphics, audio, input
+- [GoogleTest](https://github.com/google/googletest) — unit tests
 
 ## File structure
 
@@ -149,90 +140,12 @@ ladder-climber/
 │   ├── src/
 │   │   ├── main.cpp
 │   │   ├── Game.hpp / Game.cpp
-│   │   ├── model/
-│   │   │   ├── GameState.hpp / GameState.cpp
-│   │   │   ├── Player.hpp / Player.cpp
-│   │   │   ├── Platform.hpp / Platform.cpp
-│   │   │   ├── Barrel.hpp / Barrel.cpp
-│   │   │   ├── Boss.hpp / Boss.cpp
-│   │   │   ├── PillarEnemy.hpp / PillarEnemy.cpp
-│   │   │   ├── PowerUp.hpp / PowerUp.cpp
-│   │   │   └── HeartPickup.hpp / HeartPickup.cpp
-│   │   ├── view/
-│   │   │   └── GameView.hpp / GameView.cpp
-│   │   ├── control/
-│   │   │   └── GameController.hpp / GameController.cpp
-│   ├── test/
-│   │   ├── GameStateTest.cpp
-│   │   ├── PlayerTest.cpp
-│   │   ├── BarrelTest.cpp
-│   │   ├── PowerUpTest.cpp
-│   │   ├── PlatformTest.cpp
-│   │   ├── BossTest.cpp
-│   │   ├── GameControllerTest.cpp
-│   │   └── GameViewTest.cpp
-│   └── assets/
-│       ├── sprites/    # generated .png files
-│       ├── music/      # .mp3 files
-│       └── fonts/      # arial.ttf (copied from system)
+│   │   ├── model/        GameState, Player, Platform, Barrel, Boss, PillarEnemy, PowerUp, HeartPickup
+│   │   ├── view/         GameView
+│   │   └── control/      GameController
+│   ├── test/             GameStateTest, PlayerTest, BarrelTest, PowerUpTest, PlatformTest, BossTest, GameControllerTest, GameViewTest
+│   └── assets/           sprites/, music/, fonts/
 ├── jupyterhub/
-│   └── run.sh          # deps + build + tests + headless smoke run
+│   └── run.sh
 └── README.md
 ```
-
-## Docker
-
-### Build the image
-
-```bash
-docker build -t ladder-climber .
-```
-
-### Run the game (Linux — native, not WSL)
-
-```bash
-docker run --rm \
-    -e DISPLAY=$DISPLAY \
-    -e PULSE_SERVER=unix:/run/user/1000/pulse/native \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /run/user/$(id -u)/pulse:/run/user/1000/pulse \
-    --network host \
-    ladder-climber
-```
-
-### Run the game (WSLg)
-
-> **Prerequisite:** Enable Docker Desktop WSL 2 integration for your distro
-> (Settings → Resources → WSL Integration). If `docker` is not found, use `docker.exe` instead.
-
-```bash
-docker run --rm \
-    -e DISPLAY=$DISPLAY \
-    -e PULSE_SERVER=unix:/mnt/wslg/PulseServer \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v /mnt/wslg:/mnt/wslg \
-    --network host \
-    ladder-climber
-```
-
-### Run the game (Windows — VcXsrv or X410)
-
-First install and launch [VcXsrv](https://sourceforge.net/projects/vcxsrv/) (free).
-In the display settings, check **"Disable access control"**. Then:
-
-```powershell
-docker run --rm -e DISPLAY=host.docker.internal:0 ladder-climber
-```
-
-### Run tests in Docker
-
-```bash
-docker run --rm ladder-climber /bin/bash -c "cd /project/app && xvfb-run ./build/bin/LadderClimber_test"
-```
-
-## Dependencies
-
-All libraries pulled automatically by CMake via FetchContent:
-
-- [SFML 3.0](https://github.com/SFML/SFML) — windowing, graphics, audio, input
-- [GoogleTest](https://github.com/google/googletest) — unit tests
